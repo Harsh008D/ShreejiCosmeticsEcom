@@ -110,6 +110,28 @@ const Cart: React.FC = () => {
     setShowWhatsAppConfirm(false);
   };
 
+  const handleOrderCancel = async () => {
+    setPlacingOrder(true);
+    try {
+      const orderId = (window as any)._lastPlacedOrderId;
+      if (!orderId) {
+        showError('Order Error', 'Order ID not found. Please try again.');
+        setPlacingOrder(false);
+        setShowOrderConfirm(false);
+        return;
+      }
+
+      // Cancel the order
+      await apiService.cancelOrder(orderId);
+      
+      showSuccess('Order Cancelled', 'Order has been cancelled successfully.');
+      setShowOrderConfirm(false);
+    } catch (error) {
+      showError('Cancel Failed', error instanceof Error ? error.message : 'Failed to cancel order.');
+    }
+    setPlacingOrder(false);
+  };
+
   const handleOrderConfirm = async () => {
     setPlacingOrder(true);
     try {
@@ -330,7 +352,7 @@ const Cart: React.FC = () => {
           message="Did you send the WhatsApp message to confirm your order? Only after this your order will be placed as pending."
           confirmText={placingOrder ? "Placing..." : "Yes, I sent the message"}
           cancelText="Cancel"
-          onCancel={() => setShowOrderConfirm(false)}
+          onCancel={handleOrderCancel}
           onConfirm={handleOrderConfirm}
         />
       </div>
