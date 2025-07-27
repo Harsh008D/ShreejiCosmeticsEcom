@@ -34,8 +34,8 @@ if [ ! -f "config.env" ]; then
     echo "Creating config.env file..."
     cat > config.env << EOF
 PORT=5000
-MONGODB_URI=mongodb://localhost:27017/shreeji-cosmetics
-JWT_SECRET=shreeji-cosmetics-secret-key-2024
+MONGODB_URI=your_mongodb_connection_string
+SESSION_SECRET=your_session_secret_key
 NODE_ENV=development
 EOF
     echo "✅ Created config.env file"
