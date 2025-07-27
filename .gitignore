@@ -27,3 +27,7 @@ dist-ssr
 .env
 backend/config.env
 env.production
+*.env
+.env.local
+.env.development
+.env.production

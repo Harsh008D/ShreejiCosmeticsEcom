@@ -21,7 +21,7 @@ const testEmail = async () => {
       // Test sending email
       console.log('\n📤 Testing email sending...');
       const result = await sendOTPEmail(
-        'hdholakiya659@gmail.com',
+        'your_email@gmail.com',
         '123456',
         'Test User'
       );
