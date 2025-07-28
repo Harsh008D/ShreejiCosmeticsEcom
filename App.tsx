@@ -19,10 +19,10 @@ function App() {
         maxWidth: '500px'
       }}>
         <h1 style={{ color: '#333', marginBottom: '1rem' }}>
-          🎉 React is Working!
+          🎉 Shreeji Cosmetics is LIVE!
         </h1>
         <p style={{ color: '#666', marginBottom: '1rem' }}>
-          This is a simple React component test.
+          Your website is successfully deployed and working!
         </p>
         <div style={{
           background: '#f0f9ff',
@@ -32,7 +32,7 @@ function App() {
           marginTop: '1rem',
           textAlign: 'left'
         }}>
-          <strong>Status:</strong> React rendering works!<br/>
+          <strong>Status:</strong> React is working!<br/>
           <strong>Next Step:</strong> Restore full application
         </div>
       </div>
