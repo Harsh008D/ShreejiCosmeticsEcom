@@ -36,7 +36,7 @@ const Toast: React.FC<ToastProps> = ({
       clearTimeout(timer);
       clearTimeout(closeTimer);
     };
-  }, [id, duration, onClose]);
+  }, [id, duration]); // Removed onClose from dependencies
 
   const handleClose = () => {
     setIsVisible(false);

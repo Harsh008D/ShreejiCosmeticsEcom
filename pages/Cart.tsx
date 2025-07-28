@@ -31,7 +31,7 @@ const Cart: React.FC = () => {
       newQty[pid] = item.quantity;
     });
     setInputQty(newQty);
-  }, [mappedCartItems]);
+  }, [mappedCartItems.length, mappedCartItems.map(item => `${item.product.id}-${item.quantity}`).join(',')]);
 
   const handleUpdateQuantity = async (productId: string, newQuantity: number) => {
     setUpdatingId(productId);
