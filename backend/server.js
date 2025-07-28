@@ -82,7 +82,7 @@ const authLimiter = rateLimit({
 const corsOptions = {
   origin: NODE_ENV === 'production' 
     ? [
-        'https://your-vercel-domain.vercel.app', // Replace with your Vercel domain
+        'https://shreeji-cosmetics-ecoms.vercel.app', // Your Vercel domain
         'https://your-custom-domain.com', // Replace with your custom domain
         process.env.FRONTEND_URL // Allow environment variable override
       ].filter(Boolean)
