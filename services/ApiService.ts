@@ -188,21 +188,24 @@ class ApiService {
   }
 
   async updateCartItem(productId: string, quantity: number): Promise<ApiResponse> {
-    return this.request(`/cart/${productId}`, {
+    // Updated to use new backend route
+    return this.request('/cart/item', {
       method: 'PUT',
-      body: JSON.stringify({ quantity }),
+      body: JSON.stringify({ productId, quantity }),
     });
   }
 
   async removeFromCart(productId: string): Promise<ApiResponse> {
-    return this.request(`/cart/${productId}`, {
+    // Updated to use new backend route
+    return this.request(`/cart/item/${productId}`, {
       method: 'DELETE',
     });
   }
 
   async clearCart(): Promise<ApiResponse> {
-    return this.request('/cart', {
-      method: 'DELETE',
+    // Updated to use new backend route
+    return this.request('/cart/clear', {
+      method: 'POST',
     });
   }
 
