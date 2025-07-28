@@ -97,8 +97,25 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const handleDeleteImage = async (publicId: string) => {
     if (disabled) return;
 
+    // Check if this is a temporary image
+    if (publicId.startsWith('temp-')) {
+      // For temporary images, just remove from local state
+      setTempImages(prev => {
+        const updated = prev.filter(img => img.id !== publicId);
+        // Clean up the preview URL
+        const removed = prev.find(img => img.id === publicId);
+        if (removed) {
+          URL.revokeObjectURL(removed.preview);
+        }
+        return updated;
+      });
+      onImageDelete?.(publicId);
+      return;
+    }
+
+    // For existing images (not temporary)
     if (allowImmediateDelete) {
-      // For existing images that are already uploaded to Cloudinary
+      // For new products, delete from Cloudinary immediately
       try {
         console.log('Attempting to delete image with publicId:', publicId);
         const { apiService } = await import('../services/ApiService');
@@ -112,23 +129,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         setError(err.message || 'Failed to delete image');
       }
     } else {
-      // For temporary images, just remove from local state
-      if (publicId.startsWith('temp-')) {
-        setTempImages(prev => {
-          const updated = prev.filter(img => img.id !== publicId);
-          // Clean up the preview URL
-          const removed = prev.find(img => img.id === publicId);
-          if (removed) {
-            URL.revokeObjectURL(removed.preview);
-          }
-          return updated;
-        });
-        onImageDelete?.(publicId);
-      } else {
-        // Mark for deletion (for existing images in edit mode)
-        console.log('Marking image for deletion:', publicId);
-        onImageMarkForDeletion?.(publicId);
-      }
+      // For edit mode, mark for deletion
+      console.log('Marking image for deletion:', publicId);
+      onImageMarkForDeletion?.(publicId);
     }
   };
 

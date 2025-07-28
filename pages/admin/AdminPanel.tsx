@@ -290,7 +290,7 @@ const ProductsTab: React.FC<{
     inStock: true,
     featured: false
   });
-  const [tempFiles, setTempFiles] = useState<File[]>([]);
+  const [tempFiles, setTempFiles] = useState<{ [publicId: string]: File }>({});
   const [imagesMarkedForDeletion, setImagesMarkedForDeletion] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<{ category: string; inStock: boolean | undefined }>({ category: '', inStock: undefined });
@@ -377,7 +377,14 @@ const ProductsTab: React.FC<{
       images: [...(prev.images || []), ...newImages]
     }));
     if (files) {
-      setTempFiles(prev => [...prev, ...files]);
+      // Store files with their corresponding publicId
+      const newTempFiles: { [publicId: string]: File } = {};
+      newImages.forEach((img, index) => {
+        if (img.publicId.startsWith('temp-')) {
+          newTempFiles[img.publicId] = files[index];
+        }
+      });
+      setTempFiles(prev => ({ ...prev, ...newTempFiles }));
     }
   };
 
@@ -387,6 +394,14 @@ const ProductsTab: React.FC<{
       ...prev,
       images: (prev.images || []).filter(img => img.publicId !== publicId)
     }));
+    
+    // If this is a temporary image, also remove from tempFiles
+    if (publicId.startsWith('temp-')) {
+      setTempFiles(prev => {
+        const { [publicId]: removed, ...rest } = prev;
+        return rest;
+      });
+    }
   };
 
   const handleImageMarkForDeletion = (publicId: string) => {
@@ -451,10 +466,11 @@ const ProductsTab: React.FC<{
         let finalImages: ProductImage[] = [];
         
         // Upload temporary files to Cloudinary
-        if (tempFiles.length > 0) {
+        const tempFilesArray = Object.values(tempFiles);
+        if (tempFilesArray.length > 0) {
           try {
-            console.log('Uploading', tempFiles.length, 'temporary files to Cloudinary');
-            const uploadResult = await apiService.uploadImages(tempFiles);
+            console.log('Uploading', tempFilesArray.length, 'temporary files to Cloudinary');
+            const uploadResult = await apiService.uploadImages(tempFilesArray);
             finalImages.push(...uploadResult.images);
             console.log('Successfully uploaded temporary images:', uploadResult.images);
           } catch (error) {
@@ -532,7 +548,7 @@ const ProductsTab: React.FC<{
           featured: false,
           stockQuantity: 0
         });
-        setTempFiles([]);
+        setTempFiles({});
         setImagesMarkedForDeletion([]);
         setEditingProduct(null);
         setShowProductForm(false);
