@@ -186,11 +186,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         </div>
       )}
 
-      {/* Temporary Images */}
-      {tempImages.length > 0 && (
+      {/* All Images - Combined View */}
+      {(tempImages.length > 0 || existingImages.length > 0) && (
         <div className="space-y-3">
-          <h4 className="font-medium text-gray-900">New Images (will be uploaded when product is saved)</h4>
+          <h4 className="font-medium text-gray-900">Product Images</h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Temporary Images */}
             {tempImages.map((tempImg, index) => (
               <div key={tempImg.id} className="relative group">
                 <img
@@ -198,7 +199,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                   alt={`New image ${index + 1}`}
                   className="w-24 h-24 md:w-48 md:h-48 object-cover rounded-lg mx-auto"
                 />
-                {index === 0 && (
+                {index === 0 && tempImages.length > 0 && existingImages.length === 0 && (
                   <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-2 py-1 rounded">
                     Thumbnail
                   </div>
@@ -213,15 +214,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 )}
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Existing Images */}
-      {existingImages.length > 0 && (
-        <div className="space-y-3">
-          <h4 className="font-medium text-gray-900">Current Images</h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            
+            {/* Existing Images */}
             {existingImages.map((image, index) => (
               <div key={image.publicId} className="relative group">
                 <img
