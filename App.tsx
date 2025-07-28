@@ -1,26 +1,39 @@
 import React from 'react';
 
-// Debug environment variable
-console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
-console.log('All env vars:', import.meta.env);
-console.log('NODE_ENV:', import.meta.env.NODE_ENV);
-console.log('MODE:', import.meta.env.MODE);
-
 function App() {
-  console.log('App component rendering...');
-  
   return (
-    <div className="min-h-screen bg-blue-500 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-lg">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">
-          🎉 Shreeji Cosmetics is Working!
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      <div style={{
+        background: 'white',
+        padding: '2rem',
+        borderRadius: '1rem',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+        textAlign: 'center',
+        maxWidth: '500px'
+      }}>
+        <h1 style={{ color: '#333', marginBottom: '1rem' }}>
+          🎉 React is Working!
         </h1>
-        <p className="text-gray-600 mb-4">
-          Your website is successfully deployed!
+        <p style={{ color: '#666', marginBottom: '1rem' }}>
+          This is a simple React component test.
         </p>
-        <div className="text-sm text-gray-500">
-          <p>VITE_API_URL: {import.meta.env.VITE_API_URL || 'Not set'}</p>
-          <p>Environment: {import.meta.env.MODE}</p>
+        <div style={{
+          background: '#f0f9ff',
+          border: '1px solid #0ea5e9',
+          borderRadius: '0.5rem',
+          padding: '1rem',
+          marginTop: '1rem',
+          textAlign: 'left'
+        }}>
+          <strong>Status:</strong> React rendering works!<br/>
+          <strong>Next Step:</strong> Restore full application
         </div>
       </div>
     </div>
