@@ -31,7 +31,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tempImages, setTempImages] = useState<TempImage[]>([]);
+  // Remove local tempImages state - we'll use parent's state instead
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -67,27 +67,20 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       return;
     }
 
-    if (existingImages.length + tempImages.length + imageFiles.length > maxImages) {
+    // Count temporary images from existingImages (those with temp- prefix)
+    const tempImageCount = existingImages.filter(img => img.publicId.startsWith('temp-')).length;
+    if (existingImages.length + imageFiles.length > maxImages) {
       setError(`Maximum ${maxImages} images allowed`);
       return;
     }
 
     setError(null);
 
-    // Create temporary images with preview URLs
-    const newTempImages: TempImage[] = imageFiles.map(file => ({
-      file,
-      preview: URL.createObjectURL(file),
-      id: `temp-${Date.now()}-${Math.random()}`
-    }));
-
-    setTempImages(prev => [...prev, ...newTempImages]);
-
     // Create temporary ProductImage objects for the parent component
-    const tempProductImages: ProductImage[] = newTempImages.map((tempImg, index) => ({
-      url: tempImg.preview,
-      publicId: tempImg.id,
-      isThumbnail: existingImages.length + tempImages.length + index === 0 // First image is thumbnail
+    const tempProductImages: ProductImage[] = imageFiles.map((file, index) => ({
+      url: URL.createObjectURL(file),
+      publicId: `temp-${Date.now()}-${Math.random()}`,
+      isThumbnail: existingImages.length === 0 && index === 0 // First image is thumbnail if no existing images
     }));
 
     // Pass both the temporary images and the actual files
@@ -99,16 +92,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
     // Check if this is a temporary image
     if (publicId.startsWith('temp-')) {
-      // For temporary images, just remove from local state
-      setTempImages(prev => {
-        const updated = prev.filter(img => img.id !== publicId);
-        // Clean up the preview URL
-        const removed = prev.find(img => img.id === publicId);
-        if (removed) {
-          URL.revokeObjectURL(removed.preview);
-        }
-        return updated;
-      });
+      // For temporary images, just call the parent's delete function
       onImageDelete?.(publicId);
       return;
     }
@@ -187,34 +171,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       )}
 
       {/* All Images - Combined View */}
-      {(tempImages.length > 0 || existingImages.length > 0) && (
+      {existingImages.length > 0 && (
         <div className="space-y-3">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Temporary Images */}
-            {tempImages.map((tempImg, index) => (
-              <div key={tempImg.id} className="relative group">
-                <img
-                  src={tempImg.preview}
-                  alt={`New image ${index + 1}`}
-                  className="w-24 h-24 md:w-48 md:h-48 object-cover rounded-lg mx-auto"
-                />
-                {index === 0 && tempImages.length > 0 && existingImages.length === 0 && (
-                  <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-2 py-1 rounded">
-                    Thumbnail
-                  </div>
-                )}
-                {!disabled && (
-                  <button
-                    onClick={() => handleDeleteImage(tempImg.id)}
-                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-            ))}
-            
-            {/* Existing Images */}
             {existingImages.map((image, index) => (
               <div key={image.publicId} className="relative group">
                 <img
