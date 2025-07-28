@@ -22,6 +22,10 @@ import AdminPanel from './pages/admin/AdminPanel';
 import UserProfile from './pages/UserProfile';
 import { AlertTriangle } from 'lucide-react';
 
+// Debug environment variable
+console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
+console.log('All env vars:', import.meta.env);
+
 function AppRoutes() {
   const { loading } = useAuth();
 
