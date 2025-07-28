@@ -25,6 +25,8 @@ import { AlertTriangle } from 'lucide-react';
 // Debug environment variable
 console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
 console.log('All env vars:', import.meta.env);
+console.log('NODE_ENV:', import.meta.env.NODE_ENV);
+console.log('MODE:', import.meta.env.MODE);
 
 function AppRoutes() {
   const { loading } = useAuth();
@@ -63,7 +65,9 @@ function App() {
   useEffect(() => {
     const init = async () => {
       try {
+        console.log('App initialization started...');
         const result = await appController.initialize();
+        console.log('App initialization result:', result);
         if (result.success) {
           setIsInitializing(false);
         } else {
@@ -71,8 +75,8 @@ function App() {
           setIsInitializing(false);
         }
       } catch (error: unknown) {
+        console.error('Failed to initialize app:', error);
         if (error instanceof Error) {
-          console.error('Failed to initialize app:', error);
           setInitError(error.message || 'Failed to initialize application');
         } else {
           setInitError('Failed to initialize application');
@@ -99,18 +103,11 @@ function App() {
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <AlertTriangle className="w-8 h-8 text-red-600" />
           </div>
-          
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Initialization Failed
-          </h1>
-          
-          <p className="text-gray-600 mb-6">
-            {initError}
-          </p>
-
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Initialization Error</h2>
+          <p className="text-gray-600 mb-6">{initError}</p>
           <button
             onClick={() => window.location.reload()}
-            className="w-full bg-emerald-500 text-white py-3 rounded-xl font-medium hover:bg-emerald-600 transition-colors duration-200"
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Retry
           </button>
@@ -121,20 +118,20 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <ToastProvider>
-        <AuthProvider>
-          <CartProvider>
-            <WishlistProvider>
+      <AuthProvider>
+        <CartProvider>
+          <WishlistProvider>
+            <ToastProvider>
               <Router>
                 <div className="min-h-screen bg-gray-50">
                   <Navbar />
                   <AppRoutes />
                 </div>
               </Router>
-            </WishlistProvider>
-          </CartProvider>
-        </AuthProvider>
-      </ToastProvider>
+            </ToastProvider>
+          </WishlistProvider>
+        </CartProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }
