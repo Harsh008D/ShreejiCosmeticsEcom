@@ -58,60 +58,22 @@ function AppRoutes() {
 }
 
 function App() {
-  const [appController] = useState(() => new AppController());
+  // Temporarily bypass AppController to test
   const [isInitializing, setIsInitializing] = useState(true);
-  const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        console.log('App initialization started...');
-        const result = await appController.initialize();
-        console.log('App initialization result:', result);
-        if (result.success) {
-          setIsInitializing(false);
-        } else {
-          setInitError(result.error || 'Failed to initialize application');
-          setIsInitializing(false);
-        }
-      } catch (error: unknown) {
-        console.error('Failed to initialize app:', error);
-        if (error instanceof Error) {
-          setInitError(error.message || 'Failed to initialize application');
-        } else {
-          setInitError('Failed to initialize application');
-        }
-        setIsInitializing(false);
-      }
-    };
-
-    init();
-  }, [appController]);
+    console.log('App initialization started...');
+    // Simulate a short delay then set initialized
+    setTimeout(() => {
+      console.log('App initialization completed');
+      setIsInitializing(false);
+    }, 1000);
+  }, []);
 
   if (isInitializing) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <LoadingSpinner size="lg" text="Initializing application..." />
-      </div>
-    );
-  }
-
-  if (initError) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <AlertTriangle className="w-8 h-8 text-red-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Initialization Error</h2>
-          <p className="text-gray-600 mb-6">{initError}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
       </div>
     );
   }
