@@ -189,7 +189,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       {/* All Images - Combined View */}
       {(tempImages.length > 0 || existingImages.length > 0) && (
         <div className="space-y-3">
-          <h4 className="font-medium text-gray-900">Product Images</h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* Temporary Images */}
             {tempImages.map((tempImg, index) => (
