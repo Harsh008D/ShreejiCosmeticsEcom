@@ -367,7 +367,8 @@ const ProductsTab: React.FC<{
 
   const handleIngredientsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value: string = e.target.value;
-    const ingredients: string[] = value ? value.split('\n').filter(item => item.trim()) : [];
+    // Allow empty lines so Enter works for new lines
+    const ingredients: string[] = value ? value.split('\n') : [];
     setFormData(prev => ({ ...prev, ingredients }));
   };
 

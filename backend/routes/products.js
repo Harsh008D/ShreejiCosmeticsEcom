@@ -2,6 +2,8 @@ import express from 'express';
 import { body, query, validationResult } from 'express-validator';
 import Product from '../models/Product.js';
 import { protect, admin } from '../middleware/auth.js';
+import cloudinary from 'cloudinary';
+import Review from '../models/Review.js';
 
 const router = express.Router();
 
@@ -425,14 +427,39 @@ router.delete('/:id', protect, admin, async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
+    // 1. Delete all product images from Cloudinary
+    if (product.images && Array.isArray(product.images)) {
+      for (const img of product.images) {
+        if (img.publicId && !img.publicId.startsWith('legacy-')) { // skip legacy/pexels images
+          try {
+            console.log('Deleting image from Cloudinary:', img.publicId);
+            await cloudinary.v2.uploader.destroy(img.publicId);
+          } catch (err) {
+            console.error('Failed to delete image from Cloudinary:', img.publicId, err.message);
+          }
+        }
+      }
+    }
+
+    // 2. Delete all reviews for this product
+    try {
+      const reviewDeleteResult = await Review.deleteMany({ product: product._id });
+      console.log('Deleted reviews:', reviewDeleteResult.deletedCount);
+    } catch (err) {
+      console.error('Failed to delete reviews for product:', product._id, err.message);
+    }
+
+    // 3. (Optional) Delete other related data (e.g., from wishlists, carts, etc.)
+    // TODO: Implement if needed
+
     await product.deleteOne();
-    res.json({ message: 'Product removed successfully' });
+    res.json({ message: 'Product and all related data removed successfully' });
   } catch (error) {
     console.error('Delete product error:', error);
     if (error.name === 'CastError') {
       return res.status(400).json({ message: 'Invalid product ID format' });
     }
-    res.status(500).json({ message: 'Failed to delete product' });
+    res.status(500).json({ message: 'Failed to delete product', error: error.message });
   }
 });
 

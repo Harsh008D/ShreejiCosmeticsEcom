@@ -44,9 +44,8 @@ const Cart: React.FC = () => {
     }
     try {
       const result = await updateQuantity(productId, newQuantity);
-      if (result.success) {
-        showSuccess('Quantity Updated', `${item?.product.name} quantity updated to ${newQuantity}`);
-      } else {
+      // Do not show success message for quantity adjustment
+      if (!result.success) {
         showError('Failed to Update', result.error || 'Failed to update quantity');
       }
     } catch (e: unknown) {

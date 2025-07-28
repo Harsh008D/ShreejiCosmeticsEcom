@@ -32,7 +32,7 @@ const ProductDetail: React.FC = () => {
   // Add state for review delete dialog
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; reviewId: string | null }>({ open: false, reviewId: null });
   const [quantityError, setQuantityError] = useState('');
-  const { showError, showInfo } = useToast();
+  const { showError, showInfo, showSuccess } = useToast();
 
   // Helper to load product
   const loadProduct = async () => {

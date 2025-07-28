@@ -32,6 +32,10 @@ router.post('/', protect, [
   body('quantity').isInt({ min: 1 }).withMessage('Quantity must be at least 1')
 ], async (req, res) => {
   try {
+    // Prevent admin from adding to cart
+    if (req.user && req.user.isAdmin) {
+      return res.status(403).json({ message: 'Admins are not allowed to add items to cart.' });
+    }
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ 
@@ -72,10 +76,14 @@ router.post('/', protect, [
 // @desc    Update cart item quantity
 // @route   PUT /api/cart/:productId
 // @access  Private
-router.put('/:productId', protect, [
+router.put('/item', protect, [
+  body('productId').isMongoId().withMessage('Valid product ID is required'),
   body('quantity').isInt({ min: 1 }).withMessage('Quantity must be at least 1')
 ], async (req, res) => {
   try {
+    if (req.user && req.user.isAdmin) {
+      return res.status(403).json({ message: 'Admins are not allowed to update cart.' });
+    }
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ 
@@ -84,7 +92,7 @@ router.put('/:productId', protect, [
       });
     }
 
-    const { productId } = req.params;
+    const { productId } = req.body;
     const { quantity } = req.body;
 
     const cart = await Cart.findOne({ user: req.user._id });
@@ -106,8 +114,11 @@ router.put('/:productId', protect, [
 // @desc    Remove item from cart
 // @route   DELETE /api/cart/:productId
 // @access  Private
-router.delete('/:productId', protect, async (req, res) => {
+router.delete('/item/:productId', protect, async (req, res) => {
   try {
+    if (req.user && req.user.isAdmin) {
+      return res.status(403).json({ message: 'Admins are not allowed to remove items from cart.' });
+    }
     const { productId } = req.params;
 
     const cart = await Cart.findOne({ user: req.user._id });
@@ -129,8 +140,11 @@ router.delete('/:productId', protect, async (req, res) => {
 // @desc    Clear cart
 // @route   DELETE /api/cart
 // @access  Private
-router.delete('/', protect, async (req, res) => {
+router.post('/clear', protect, async (req, res) => {
   try {
+    if (req.user && req.user.isAdmin) {
+      return res.status(403).json({ message: 'Admins are not allowed to clear cart.' });
+    }
     const cart = await Cart.findOne({ user: req.user._id });
     
     if (!cart) {

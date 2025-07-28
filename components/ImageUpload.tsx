@@ -181,11 +181,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                   alt={`Product image ${index + 1}`}
                   className="w-24 h-24 md:w-48 md:h-48 object-cover rounded-lg mx-auto"
                 />
-                {image.isThumbnail && (
-                  <div className="absolute top-1 left-1 bg-emerald-500 text-white text-xs px-2 py-1 rounded">
-                    Thumbnail
-                  </div>
-                )}
+                {/* Remove Thumbnail badge here */}
                 {!disabled && (
                   <button
                     onClick={() => handleDeleteImage(image.publicId)}

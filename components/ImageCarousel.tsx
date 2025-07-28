@@ -78,11 +78,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
         )}
 
         {/* Thumbnail Indicator */}
-        {currentImage.isThumbnail && (
-          <div className="absolute top-4 left-4 bg-emerald-500 text-white px-2 py-1 rounded text-xs">
-            Thumbnail
-          </div>
-        )}
+        {/* Remove Thumbnail badge from carousel */}
       </div>
 
       {/* Indicators */}
@@ -120,11 +116,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
                 alt={`Thumbnail ${index + 1}`}
                 className="w-16 h-16 object-cover rounded-md"
               />
-              {image.isThumbnail && (
-                <div className="absolute top-0 left-0 bg-emerald-500 text-white text-xs px-1 py-0.5 rounded-tl-md">
-                  T
-                </div>
-              )}
+              {/* Remove Thumbnail badge from carousel */}
             </button>
           ))}
         </div>
