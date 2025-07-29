@@ -85,12 +85,13 @@ if (NODE_ENV === 'production') {
 // CORS configuration
 const corsOptions = {
   origin: NODE_ENV === 'production' 
-    ? true // Allow all origins in production for now
+    ? ['https://shreeji-cosmetics-ecom.vercel.app', 'https://shreeji-cosmetics-ecom-git-main-harsh008d.vercel.app']
     : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:4173'],
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cookie', 'Set-Cookie'],
+  exposedHeaders: ['Set-Cookie']
 };
 
 app.use(cors(corsOptions));
@@ -110,8 +111,9 @@ app.use(session({
   cookie: {
     httpOnly: true,
     secure: NODE_ENV === 'production',
-    sameSite: NODE_ENV === 'production' ? 'none' : 'lax', // Changed from 'strict' to 'none' for cross-origin
-    maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
+    sameSite: NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    domain: NODE_ENV === 'production' ? '.railway.app' : undefined
   }
 }));
 

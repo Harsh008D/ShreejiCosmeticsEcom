@@ -49,12 +49,28 @@ class ApiService {
       credentials: 'include', // Important for session/cookie auth
       ...options,
     };
-    const response = await fetch(url, config);
-    const data = await response.json();
-    if (!response.ok) {
-      throw data;
+    
+    try {
+      const response = await fetch(url, config);
+      
+      // Handle network errors
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({ message: 'Network error' }));
+        throw data;
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      // Handle fetch errors (network issues, CORS, etc.)
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw { 
+          message: 'Network connection failed. Please check your internet connection and try again.',
+          error: 'NETWORK_ERROR'
+        };
+      }
+      throw error;
     }
-    return data;
   }
 
   // Authentication endpoints
