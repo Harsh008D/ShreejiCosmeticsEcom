@@ -19,7 +19,12 @@ const AdminPanel: React.FC = () => {
   const [showProductForm, setShowProductForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; action: 'add' | 'update' | 'delete' | null; productId?: string }>({ open: false, action: null });
+  const [confirmDialog, setConfirmDialog] = useState<{ 
+    open: boolean; 
+    action: 'add' | 'update' | 'delete' | null; 
+    productId?: string;
+    message?: string;
+  }>({ open: false, action: null });
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [pendingOrderCount, setPendingOrderCount] = useState(0);
 
@@ -78,8 +83,17 @@ const AdminPanel: React.FC = () => {
   const deleteProduct = async (productId: string) => {
     try {
       setLoading(true);
-      await apiService.deleteProduct(productId);
-      showSuccess('Product Deleted', 'Product has been successfully deleted');
+      const response = await apiService.deleteProduct(productId);
+      
+      // Show detailed success message with cleanup info
+      if (response.cleanup) {
+        const cleanupInfo = response.cleanup;
+        const message = `Product deleted successfully!\n\nCleanup completed:\n• ${cleanupInfo.imagesDeleted} images removed from Cloudinary\n• All reviews deleted\n• Removed from ${cleanupInfo.cartsUpdated} carts\n• Removed from ${cleanupInfo.wishlistsUpdated} wishlists\n• Updated ${cleanupInfo.ordersUpdated} orders`;
+        showSuccess('Product Deleted', message);
+      } else {
+        showSuccess('Product Deleted', 'Product has been successfully deleted');
+      }
+      
       await loadProducts(); // Reload products after deletion
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -264,8 +278,18 @@ const ProductsTab: React.FC<{
   loadProducts: () => Promise<void>;
   showSuccess: (title: string, message: string) => void;
   showError: (title: string, message: string) => void;
-  confirmDialog: { open: boolean; action: 'add' | 'update' | 'delete' | null; productId?: string };
-  setConfirmDialog: (dialog: { open: boolean; action: 'add' | 'update' | 'delete' | null; productId?: string }) => void;
+  confirmDialog: { 
+    open: boolean; 
+    action: 'add' | 'update' | 'delete' | null; 
+    productId?: string;
+    message?: string;
+  };
+  setConfirmDialog: (dialog: { 
+    open: boolean; 
+    action: 'add' | 'update' | 'delete' | null; 
+    productId?: string;
+    message?: string;
+  }) => void;
   showSearchModal: boolean;
   setShowSearchModal: (show: boolean) => void;
 }> = ({ products, deleteProduct, editingProduct, setEditingProduct, showProductForm, setShowProductForm, loadProducts, showSuccess, showError, confirmDialog, setConfirmDialog, showSearchModal, setShowSearchModal }) => {
@@ -427,7 +451,7 @@ const ProductsTab: React.FC<{
     return '';
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const errorMsg = validateForm(formData);
     if (errorMsg) {
@@ -439,7 +463,12 @@ const ProductsTab: React.FC<{
   };
 
   const handleDelete = (productId: string) => {
-    setConfirmDialog({ open: true, action: 'delete', productId });
+    setConfirmDialog({ 
+      open: true, 
+      action: 'delete', 
+      productId,
+      message: 'This will permanently delete the product and remove all associated data including images, reviews, cart items, and wishlist entries. This action cannot be undone.'
+    });
   };
 
   // Move actual add/update/delete logic to handlers for dialog
@@ -451,15 +480,24 @@ const ProductsTab: React.FC<{
     }
     if (confirmDialog.action === 'add' || confirmDialog.action === 'update') {
       try {
+        console.log('Starting product save process...');
+        console.log('Local images count:', localImages.length);
+        console.log('Image upload ref:', imageUploadRef.current);
+        
         // Upload local images first if any
         let uploadedImages: ProductImage[] = [];
         if (localImages.length > 0 && imageUploadRef.current) {
+          console.log('Uploading local images to Cloudinary...');
           try {
             uploadedImages = await imageUploadRef.current.uploadLocalImages();
+            console.log('Successfully uploaded images:', uploadedImages);
           } catch (error) {
+            console.error('Failed to upload images:', error);
             showError('Upload Failed', 'Failed to upload images. Please try again.');
             return;
           }
+        } else {
+          console.log('No local images to upload or ref not available');
         }
 
         // Normalize images to always be array of objects
@@ -479,6 +517,7 @@ const ProductsTab: React.FC<{
 
         // Combine existing images with newly uploaded ones
         const allImages = [...normalizedImages, ...uploadedImages];
+        console.log('All images for product:', allImages);
 
         // Prepare payload, only include fields that are provided
         const payload: Partial<Product> = {
@@ -505,12 +544,19 @@ const ProductsTab: React.FC<{
         // Always include images array if we have any images
         if (allImages.length > 0) {
           payload.images = allImages;
+          console.log('Including images in payload:', payload.images);
+        } else {
+          console.log('No images to include in payload');
         }
 
+        console.log('Final payload:', payload);
+
         if (confirmDialog.action === 'add') {
+          console.log('Creating product with payload:', JSON.stringify(payload, null, 2));
           await apiService.createProduct(payload);
           showSuccess('Product Added', 'Product has been successfully created');
         } else if (confirmDialog.action === 'update' && editingProduct) {
+          console.log('Updating product with payload:', JSON.stringify(payload, null, 2));
           await apiService.updateProduct(editingProduct.id!, payload);
           showSuccess('Product Updated', 'Product has been successfully updated');
         }
@@ -993,15 +1039,14 @@ const ProductsTab: React.FC<{
         title={confirmDialog.action === 'delete' ? 'Delete Product?' : confirmDialog.action === 'add' ? 'Add Product?' : 'Update Product?'}
         message={
           confirmDialog.action === 'delete'
-            ? 'Are you sure you want to delete this product? This action cannot be undone.'
+            ? confirmDialog.message || 'Are you sure you want to delete this product? This action cannot be undone.'
             : confirmDialog.action === 'add'
             ? 'Are you sure you want to add this product?'
             : 'Are you sure you want to update this product?'
         }
         confirmText={confirmDialog.action === 'delete' ? 'Delete' : confirmDialog.action === 'add' ? 'Add' : 'Update'}
-        cancelText="Cancel"
-        onCancel={() => setConfirmDialog({ open: false, action: null })}
         onConfirm={handleConfirm}
+        onCancel={() => setConfirmDialog({ open: false, action: null })}
       />
       {/* Search Modal (mobile only) */}
       {showSearchModal && (

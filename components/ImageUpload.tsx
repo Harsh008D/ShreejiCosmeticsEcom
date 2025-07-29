@@ -152,13 +152,21 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
 
   // Function to upload local images to Cloudinary
   const uploadLocalImages = useCallback(async (): Promise<ProductImage[]> => {
-    if (localImages.length === 0) return [];
+    console.log('uploadLocalImages called, localImages count:', localImages.length);
+    if (localImages.length === 0) {
+      console.log('No local images to upload');
+      return [];
+    }
     
     setUploading(true);
     try {
+      console.log('Starting upload to Cloudinary...');
       const { apiService } = await import('../services/ApiService');
       const files = localImages.map(img => img.file);
+      console.log('Files to upload:', files.length);
       const result = await apiService.uploadImages(files);
+      console.log('Upload result:', result);
+      console.log('Upload result.images:', result.images);
       
       // Clean up local images
       localImages.forEach(img => URL.revokeObjectURL(img.preview));
@@ -166,6 +174,7 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
       
       return result.images;
     } catch (err: unknown) {
+      console.error('Upload error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to upload images';
       setError(errorMessage);
       throw err;

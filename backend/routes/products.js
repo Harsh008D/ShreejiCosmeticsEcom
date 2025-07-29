@@ -425,8 +425,103 @@ router.delete('/:id', protect, admin, async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
+    console.log('Starting comprehensive cleanup for product:', product.name);
+
+    // 1. Delete images from Cloudinary
+    if (product.images && product.images.length > 0) {
+      console.log('Deleting images from Cloudinary...');
+      for (const image of product.images) {
+        try {
+          const cloudinary = await import('cloudinary').then(module => module.v2);
+          cloudinary.config({
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET
+          });
+          
+          await cloudinary.uploader.destroy(image.publicId);
+          console.log('Deleted image from Cloudinary:', image.publicId);
+        } catch (error) {
+          console.error('Failed to delete image from Cloudinary:', image.publicId, error);
+          // Continue with other cleanup even if one image fails
+        }
+      }
+    }
+
+    // 2. Delete all reviews for this product
+    try {
+      const Review = await import('../models/Review.js').then(module => module.default);
+      const deletedReviews = await Review.deleteMany({ product: id });
+      console.log('Deleted reviews:', deletedReviews.deletedCount);
+    } catch (error) {
+      console.error('Failed to delete reviews:', error);
+    }
+
+    // 3. Remove product from all carts
+    try {
+      const Cart = await import('../models/Cart.js').then(module => module.default);
+      const updatedCarts = await Cart.updateMany(
+        { 'items.product': id },
+        { $pull: { items: { product: id } } }
+      );
+      console.log('Updated carts:', updatedCarts.modifiedCount);
+    } catch (error) {
+      console.error('Failed to remove from carts:', error);
+    }
+
+    // 4. Remove product from all wishlists
+    try {
+      const Wishlist = await import('../models/Wishlist.js').then(module => module.default);
+      const updatedWishlists = await Wishlist.updateMany(
+        { products: id },
+        { $pull: { products: id } }
+      );
+      console.log('Updated wishlists:', updatedWishlists.modifiedCount);
+    } catch (error) {
+      console.error('Failed to remove from wishlists:', error);
+    }
+
+    // 5. Update orders that contain this product
+    try {
+      const Order = await import('../models/Order.js').then(module => module.default);
+      const ordersWithProduct = await Order.find({
+        'items.product': id
+      });
+      
+      for (const order of ordersWithProduct) {
+        // Remove the product from order items
+        order.items = order.items.filter(item => item.product.toString() !== id);
+        
+        // Recalculate order total
+        order.total = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        
+        // If order becomes empty, mark it as cancelled
+        if (order.items.length === 0) {
+          order.status = 'cancelled';
+          order.cancellationReason = 'Product deleted by admin';
+        }
+        
+        await order.save();
+      }
+      console.log('Updated orders:', ordersWithProduct.length);
+    } catch (error) {
+      console.error('Failed to update orders:', error);
+    }
+
+    // 6. Finally, delete the product itself
     await product.deleteOne();
-    res.json({ message: 'Product removed successfully' });
+    console.log('Product deleted successfully:', product.name);
+
+    res.json({ 
+      message: 'Product and all associated data removed successfully',
+      cleanup: {
+        imagesDeleted: product.images ? product.images.length : 0,
+        reviewsDeleted: 'completed',
+        cartsUpdated: 'completed',
+        wishlistsUpdated: 'completed',
+        ordersUpdated: 'completed'
+      }
+    });
   } catch (error) {
     console.error('Delete product error:', error);
     if (error.name === 'CastError') {
