@@ -249,16 +249,15 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
       {(existingImages.length > 0 || localImages.length > 0) && (
         <div className="space-y-3">
           <h4 className="font-medium text-gray-900">Product Images</h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid gap-1" style={{gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))'}}>
             {/* Existing Images */}
             {existingImages.map((image, index) => (
-              <div key={image.publicId} className="relative group">
+              <div key={image.publicId} className="relative group aspect-square max-w-[128px]">
                 <img
                   src={image.url}
                   alt={`Product image ${index + 1}`}
-                  className="w-24 h-24 md:w-48 md:h-48 object-cover rounded-lg mx-auto"
+                  className="w-full h-full object-cover rounded-lg"
                 />
-                {/* Removed Thumbnail badge */}
                 {!disabled && (
                   <button
                     onClick={(e) => {
@@ -266,21 +265,21 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
                       e.stopPropagation();
                       handleDeleteImage(image.publicId);
                     }}
-                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-0 right-0 m-0 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    style={{lineHeight: 0}}
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
                 )}
               </div>
             ))}
-            
             {/* New Local Images */}
             {localImages.map((image) => (
-              <div key={image.id} className="relative group">
+              <div key={image.id} className="relative group aspect-square max-w-[128px]">
                 <img
                   src={image.preview}
                   alt="Selected image preview"
-                  className="w-24 h-24 md:w-48 md:h-48 object-cover rounded-lg mx-auto"
+                  className="w-full h-full object-cover rounded-lg"
                 />
                 <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-2 py-1 rounded">
                   New
@@ -292,7 +291,8 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
                       e.stopPropagation();
                       handleDeleteLocalImage(image.id);
                     }}
-                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-0 right-0 m-0 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    style={{lineHeight: 0}}
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
