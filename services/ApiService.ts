@@ -31,7 +31,8 @@ class ApiService {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = '/api';
+    // Use the Railway URL from environment variable
+    this.baseUrl = import.meta.env.VITE_API_URL || 'https://shreejicosmeticsecom-production.up.railway.app';
   }
 
   // Make HTTP request (with credentials for session-based auth)
