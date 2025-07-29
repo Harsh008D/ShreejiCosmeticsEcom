@@ -236,40 +236,12 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
         </div>
       )}
 
-      {/* Local Images Preview */}
-      {delayedUpload && localImages.length > 0 && (
+      {/* All Images (Existing + New) */}
+      {(existingImages.length > 0 || localImages.length > 0) && (
         <div className="space-y-3">
-          <h4 className="font-medium text-gray-900">Selected Images (Preview)</h4>
+          <h4 className="font-medium text-gray-900">Product Images</h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {localImages.map((image) => (
-              <div key={image.id} className="relative group">
-                <img
-                  src={image.preview}
-                  alt="Selected image preview"
-                  className="w-24 h-24 md:w-48 md:h-48 object-cover rounded-lg mx-auto"
-                />
-                <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-2 py-1 rounded">
-                  Preview
-                </div>
-                {!disabled && (
-                  <button
-                    onClick={() => handleDeleteLocalImage(image.id)}
-                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Existing Images */}
-      {existingImages.length > 0 && (
-        <div className="space-y-3">
-          <h4 className="font-medium text-gray-900">Current Images</h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Existing Images */}
             {existingImages.map((image, index) => (
               <div key={image.publicId} className="relative group">
                 <img
@@ -284,7 +256,37 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
                 )}
                 {!disabled && (
                   <button
-                    onClick={() => handleDeleteImage(image.publicId)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDeleteImage(image.publicId);
+                    }}
+                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            ))}
+            
+            {/* New Local Images */}
+            {localImages.map((image) => (
+              <div key={image.id} className="relative group">
+                <img
+                  src={image.preview}
+                  alt="Selected image preview"
+                  className="w-24 h-24 md:w-48 md:h-48 object-cover rounded-lg mx-auto"
+                />
+                <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                  New
+                </div>
+                {!disabled && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDeleteLocalImage(image.id);
+                    }}
                     className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Trash2 className="w-3 h-3" />
