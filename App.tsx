@@ -20,9 +20,6 @@ import AdminPanel from './pages/admin/AdminPanel';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminProducts from './pages/admin/AdminProducts';
 
-// Components
-import AppController from './components/AppController';
-
 function App() {
   const [isLoading, setIsLoading] = useState(true);
 
@@ -53,22 +50,20 @@ function App() {
           <WishlistProvider>
             <ToastProvider>
               <Router>
-                <AppController>
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="/verify-otp" element={<VerifyOTP />} />
-                    <Route path="/product/:id" element={<ProductDetail />} />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route path="/wishlist" element={<Wishlist />} />
-                    <Route path="/profile" element={<UserProfile />} />
-                    <Route path="/admin" element={<AdminPanel />} />
-                    <Route path="/admin/orders" element={<AdminOrders />} />
-                    <Route path="/admin/products" element={<AdminProducts />} />
-                  </Routes>
-                </AppController>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/verify-otp" element={<VerifyOTP />} />
+                  <Route path="/product/:id" element={<ProductDetail />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/wishlist" element={<Wishlist />} />
+                  <Route path="/profile" element={<UserProfile />} />
+                  <Route path="/admin" element={<AdminPanel />} />
+                  <Route path="/admin/orders" element={<AdminOrders />} />
+                  <Route path="/admin/products" element={<AdminProducts />} />
+                </Routes>
               </Router>
             </ToastProvider>
           </WishlistProvider>
