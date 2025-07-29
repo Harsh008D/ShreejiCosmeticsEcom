@@ -309,6 +309,7 @@ const ProductsTab: React.FC<{
     images: [],
     description: '',
     ingredients: [],
+    ingredientsRaw: '',
     usage: '',
     category: '',
     inStock: true,
@@ -395,8 +396,19 @@ const ProductsTab: React.FC<{
 
   const handleIngredientsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value: string = e.target.value;
-    const ingredients: string[] = value ? value.split('\n').filter(item => item.trim()) : [];
-    setFormData(prev => ({ ...prev, ingredients }));
+    // Split by newlines and filter out empty lines, but preserve the raw value for display
+    const ingredients: string[] = value 
+      ? value.split('\n')
+          .map(item => item.trim())
+          .filter(item => item.length > 0)
+      : [];
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      ingredients,
+      // Store the raw value for better UX
+      ingredientsRaw: value 
+    }));
   };
 
   const handleImagesUploaded = (newImages: ProductImage[]) => {
@@ -569,6 +581,7 @@ const ProductsTab: React.FC<{
           images: [],
           description: '',
           ingredients: [],
+          ingredientsRaw: '',
           usage: '',
           category: '',
           inStock: true,
@@ -722,6 +735,7 @@ const ProductsTab: React.FC<{
               image: '',
               description: '',
               ingredients: [],
+              ingredientsRaw: '',
               usage: '',
               category: '',
               inStock: true,
@@ -845,10 +859,12 @@ const ProductsTab: React.FC<{
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Ingredients (one per line)</label>
               <textarea
+                name="ingredients"
                 rows={4}
-                value={(formData.ingredients ?? []).join('\n')}
+                value={formData.ingredientsRaw || (formData.ingredients ?? []).join('\n')}
                 onChange={handleIngredientsChange}
-                className="w-full px-4 py-3 border border-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="Enter ingredients, one per line&#10;Example:&#10;Aloe Vera&#10;Coconut Oil&#10;Vitamin E"
+                className="w-full px-4 py-3 border border-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-y"
               />
             </div>
 
@@ -908,6 +924,7 @@ const ProductsTab: React.FC<{
                     images: [], 
                     description: '', 
                     ingredients: [], 
+                    ingredientsRaw: '',
                     usage: '', 
                     category: '', 
                     inStock: true, 
