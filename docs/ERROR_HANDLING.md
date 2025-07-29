@@ -176,7 +176,7 @@ curl http://localhost:5000/api/cart
 ```env
 NODE_ENV=development  # Enable detailed error messages
 JWT_SECRET=your-secret  # Secure token validation
-MONGODB_URI=your_mongodb_connection_string
+MONGODB_URI=mongodb://localhost:27017/shreeji-cosmetics
 ```
 
 ### Error Message Customization

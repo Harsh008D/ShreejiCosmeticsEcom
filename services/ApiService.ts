@@ -1,29 +1,29 @@
-import { Product } from '../models/ProductModel';
+import { Product } from '../types';
 import { User, LoginCredentials, RegisterData } from '../models/UserModel';
 import { CartItem } from '../models/CartModel';
 
 // API Response types
-interface ApiResponse<T = Record<string, unknown>> {
+interface ApiResponse {
   message?: string;
   error?: string;
-  errors?: any;
-  [key: string]: any;
+  errors?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 // Helper function to map MongoDB _id to id for frontend compatibility
-function mapProductId(product: any): Product {
-  if (!product) return product;
+function mapProductId(product: Record<string, unknown>): Product {
+  if (!product) return product as Product;
   return {
     ...product,
-    id: product._id || product.id,
+    id: (product._id as string) || (product.id as string),
     numReviews: typeof product.numReviews === 'number' ? product.numReviews : 0,
     rating: typeof product.rating === 'number' ? product.rating : 0,
     _id: undefined
-  };
+  } as Product;
 }
 
 // Helper function to map array of products
-function mapProductsArray(products: any[]): Product[] {
+function mapProductsArray(products: Record<string, unknown>[]): Product[] {
   return products.map(mapProductId);
 }
 
@@ -31,8 +31,7 @@ class ApiService {
   private baseUrl: string;
 
   constructor() {
-    // Use environment variable for API URL, fallback to relative path for development
-    this.baseUrl = import.meta.env.VITE_API_URL || '/api';
+    this.baseUrl = '/api';
   }
 
   // Make HTTP request (with credentials for session-based auth)
@@ -113,12 +112,12 @@ class ApiService {
 
   // Product endpoints
   async getProducts(): Promise<Product[]> {
-    const response = await this.request<{ products: Product[] }>('/products');
+    const response = await this.request<{ products: Record<string, unknown>[] }>('/products');
     return mapProductsArray(response.products || []);
   }
 
   async getProductById(id: string): Promise<Product | undefined> {
-    const product = await this.request<Product>(`/products/${id}`);
+    const product = await this.request<Record<string, unknown>>(`/products/${id}`);
     return product ? mapProductId(product) : undefined;
   }
 
@@ -130,21 +129,23 @@ class ApiService {
   // Create product (Admin)
   async createProduct(product: Partial<Product>): Promise<Product> {
     // Remove id/_id from payload
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, _id, ...payload } = product;
-    return this.request<Product>('/products', {
+    return this.request<Record<string, unknown>>('/products', {
       method: 'POST',
       body: JSON.stringify(payload),
-    });
+    }).then(mapProductId);
   }
 
   // Update product (Admin)
   async updateProduct(productId: string, product: Partial<Product>): Promise<Product> {
     // Remove id/_id from payload
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, _id, ...payload } = product;
-    return this.request<Product>(`/products/${productId}`, {
+    return this.request<Record<string, unknown>>(`/products/${productId}`, {
       method: 'PUT',
       body: JSON.stringify(payload),
-    });
+    }).then(mapProductId);
   }
 
   // Delete product (Admin)
@@ -155,23 +156,23 @@ class ApiService {
   }
 
   async getProductsByCategory(category: string): Promise<Product[]> {
-    const response = await this.request<{ products: Product[] }>(`/products/category/${category}`);
+    const response = await this.request<{ products: Record<string, unknown>[] }>(`/products/category/${category}`);
     return mapProductsArray(response.products || []);
   }
 
   async getProductsByBrand(brand: string): Promise<Product[]> {
-    const response = await this.request<{ products: Product[] }>(`/products/brand/${brand}`);
+    const response = await this.request<{ products: Record<string, unknown>[] }>(`/products/brand/${brand}`);
     return mapProductsArray(response.products || []);
   }
 
   async searchProducts(query: string): Promise<Product[]> {
-    const response = await this.request<{ products: Product[] }>(`/products/search?q=${encodeURIComponent(query)}`);
+    const response = await this.request<{ products: Record<string, unknown>[] }>(`/products/search?q=${encodeURIComponent(query)}`);
     return mapProductsArray(response.products || []);
   }
 
   // Featured products endpoint
   async getFeaturedProducts(): Promise<Product[]> {
-    const products = await this.request<Product[]>('/products/featured');
+    const products = await this.request<Record<string, unknown>[]>('/products/featured');
     return mapProductsArray(products || []);
   }
 
@@ -188,24 +189,21 @@ class ApiService {
   }
 
   async updateCartItem(productId: string, quantity: number): Promise<ApiResponse> {
-    // Updated to use new backend route
-    return this.request('/cart/item', {
+    return this.request(`/cart/${productId}`, {
       method: 'PUT',
-      body: JSON.stringify({ productId, quantity }),
+      body: JSON.stringify({ quantity }),
     });
   }
 
   async removeFromCart(productId: string): Promise<ApiResponse> {
-    // Updated to use new backend route
-    return this.request(`/cart/item/${productId}`, {
+    return this.request(`/cart/${productId}`, {
       method: 'DELETE',
     });
   }
 
   async clearCart(): Promise<ApiResponse> {
-    // Updated to use new backend route
-    return this.request('/cart/clear', {
-      method: 'POST',
+    return this.request('/cart', {
+      method: 'DELETE',
     });
   }
 
@@ -228,7 +226,7 @@ class ApiService {
   }
 
   // Review endpoints
-  async getProductReviews(productId: string): Promise<any[]> {
+  async getProductReviews(productId: string): Promise<Record<string, unknown>[]> {
     // Use the correct backend endpoint for fetching reviews
     return this.request(`/reviews/product/${productId}`);
   }
@@ -260,7 +258,7 @@ class ApiService {
   }
 
   // Add a review (use /reviews/ endpoint for POST)
-  async addReview(productId: string, rating: number, comment: string): Promise<any> {
+  async addReview(productId: string, rating: number, comment: string): Promise<Record<string, unknown>> {
     return this.request('/reviews/', {
       method: 'POST',
       body: JSON.stringify({ productId, rating, comment }),
@@ -273,7 +271,7 @@ class ApiService {
   }
 
   // Update a review
-  async updateReview(reviewId: string, rating: number, comment: string): Promise<any> {
+  async updateReview(reviewId: string, rating: number, comment: string): Promise<Record<string, unknown>> {
     return this.request(`/reviews/${reviewId}`, {
       method: 'PUT',
       body: JSON.stringify({ rating, comment }),
@@ -281,7 +279,7 @@ class ApiService {
   }
 
   // Delete a review
-  async deleteReview(reviewId: string): Promise<any> {
+  async deleteReview(reviewId: string): Promise<Record<string, unknown>> {
     return this.request(`/reviews/${reviewId}`, {
       method: 'DELETE',
     });
@@ -292,7 +290,7 @@ class ApiService {
     return this.request('/brand');
   }
 
-  async updateBrandInfo(brandInfo: any): Promise<ApiResponse> {
+  async updateBrandInfo(brandInfo: Record<string, unknown>): Promise<ApiResponse> {
     return this.request('/brand', {
       method: 'PUT',
       body: JSON.stringify(brandInfo),
@@ -300,40 +298,40 @@ class ApiService {
   }
 
   // Order endpoints
-  async placeOrder(items: { product: string; quantity: number; price: number }[], status: string = 'pending'): Promise<any> {
+  async placeOrder(items: { product: string; quantity: number; price: number }[], status: string = 'pending'): Promise<Record<string, unknown>> {
     return this.request('/orders', {
       method: 'POST',
       body: JSON.stringify({ items, status }),
     });
   }
 
-  async getMyOrders(): Promise<any[]> {
+  async getMyOrders(): Promise<Record<string, unknown>[]> {
     return this.request('/orders/my');
   }
 
-  async cancelOrder(orderId: string): Promise<any> {
+  async cancelOrder(orderId: string): Promise<Record<string, unknown>> {
     return this.request(`/orders/${orderId}/cancel`, {
       method: 'POST',
     });
   }
 
   // Admin: Get all orders
-  async getAllOrders(): Promise<any[]> {
+  async getAllOrders(): Promise<Record<string, unknown>[]> {
     return this.request('/orders');
   }
 
   // Admin: Cancel any order
-  async adminCancelOrder(orderId: string): Promise<any> {
+  async adminCancelOrder(orderId: string): Promise<Record<string, unknown>> {
     return this.request(`/orders/${orderId}/admin-cancel`, { method: 'POST' });
   }
 
   // Admin: Mark any order as delivered
-  async markOrderDelivered(orderId: string): Promise<any> {
+  async markOrderDelivered(orderId: string): Promise<Record<string, unknown>> {
     return this.request(`/orders/${orderId}/deliver`, { method: 'POST' });
   }
 
   // Admin: Confirm a pending order
-  async confirmOrder(orderId: string, status: string = 'active'): Promise<any> {
+  async confirmOrder(orderId: string, status: string = 'active'): Promise<Record<string, unknown>> {
     return this.request(`/orders/${orderId}/confirm`, {
       method: 'POST',
       body: JSON.stringify({ status }),
@@ -343,9 +341,12 @@ class ApiService {
 
   // User endpoints
   async getUsers(): Promise<User[]> {
-    const response = await this.request<User[]>('/users');
+    const response = await this.request<Record<string, unknown>[]>('/users');
     // The backend returns an array of users directly
-    return (response || []).map((user: any) => ({ ...user, id: user._id || user.id }));
+    return (response || []).map((user: Record<string, unknown>) => ({ 
+      ...user, 
+      id: (user._id as string) || (user.id as string) 
+    } as User));
   }
 
   // Image upload endpoints

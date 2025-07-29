@@ -5,8 +5,6 @@ import { useCart } from '../context/CartContext';
 import apiService from '../services/api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
-import { CartItemType } from '../types/cart';
 
 const Cart: React.FC = () => {
   const { cartItems, removeFromCart, updateQuantity, clearCart, getCartTotal, loading, refreshCart } = useCart();
@@ -18,7 +16,6 @@ const Cart: React.FC = () => {
   const [placingOrder, setPlacingOrder] = useState(false);
   const [showOrderConfirm, setShowOrderConfirm] = useState(false);
   const { user } = useAuth();
-  const { showSuccess, showError, showInfo } = useToast();
 
   // Ensure all cartItems have id set from _id if needed
   const mappedCartItems = cartItems.map((item) => ({ ...item, product: { ...item.product, id: item.product._id || item.product.id } }));
@@ -31,25 +28,22 @@ const Cart: React.FC = () => {
       newQty[pid] = item.quantity;
     });
     setInputQty(newQty);
-  }, [mappedCartItems.length, mappedCartItems.map(item => `${item.product.id}-${item.quantity}`).join(',')]);
+  }, [mappedCartItems]);
 
   const handleUpdateQuantity = async (productId: string, newQuantity: number) => {
     setUpdatingId(productId);
     setLocalError(null);
     const item = mappedCartItems.find(i => i.product.id === productId);
     if (item && newQuantity > item.product.stockQuantity) {
-      showError('Stock Limit', `Only ${item.product.stockQuantity} in stock. Please reduce quantity.`);
+      setLocalError(`Only ${item.product.stockQuantity} in stock. Please reduce quantity.`);
       setUpdatingId(null);
       return;
     }
     try {
       const result = await updateQuantity(productId, newQuantity);
-      // Do not show success message for quantity adjustment
-      if (!result.success) {
-        showError('Failed to Update', result.error || 'Failed to update quantity');
-      }
+      if (!result.success) setLocalError(result.error || 'Failed to update quantity');
     } catch (e: unknown) {
-      showError('Error', e instanceof Error ? e.message : 'Failed to update quantity');
+      setLocalError(e instanceof Error ? e.message : 'Failed to update quantity');
     }
     setUpdatingId(null);
   };
@@ -57,16 +51,11 @@ const Cart: React.FC = () => {
   const handleRemoveFromCart = async (productId: string) => {
     setUpdatingId(productId);
     setLocalError(null);
-    const item = mappedCartItems.find(i => i.product.id === productId);
     try {
       const result = await removeFromCart(productId);
-      if (result.success) {
-        showSuccess('Removed from Cart', `${item?.product.name} has been removed from your cart`);
-      } else {
-        showError('Failed to Remove', result.error || 'Failed to remove item');
-      }
+      if (!result.success) setLocalError(result.error || 'Failed to remove item');
     } catch (e: unknown) {
-      showError('Error', e instanceof Error ? e.message : 'Failed to remove item');
+      setLocalError(e instanceof Error ? e.message : 'Failed to remove item');
     }
     setUpdatingId(null);
   };
@@ -99,36 +88,13 @@ const Cart: React.FC = () => {
       window.open(whatsappUrl, '_blank');
       // 4. Show confirm dialog to user
       setShowOrderConfirm(true);
-      showSuccess('Order Placed', `Order #${orderNo} has been placed successfully! WhatsApp opened for confirmation.`);
       // Save orderId for use in handleOrderConfirm if needed
-      (window as any)._lastPlacedOrderId = orderId;
+      (window as Record<string, unknown>)._lastPlacedOrderId = orderId;
     } catch (error) {
-      showError('Order Failed', error instanceof Error ? error.message : 'Failed to place order or open WhatsApp.');
+      setLocalError(error instanceof Error ? error.message : 'Failed to place order or open WhatsApp.');
     }
     setPlacingOrder(false);
     setShowWhatsAppConfirm(false);
-  };
-
-  const handleOrderCancel = async () => {
-    setPlacingOrder(true);
-    try {
-      const orderId = (window as any)._lastPlacedOrderId;
-      if (!orderId) {
-        showError('Order Error', 'Order ID not found. Please try again.');
-        setPlacingOrder(false);
-        setShowOrderConfirm(false);
-        return;
-      }
-
-      // Cancel the order
-      await apiService.cancelOrder(orderId);
-      
-      showSuccess('Order Cancelled', 'Order has been cancelled successfully.');
-      setShowOrderConfirm(false);
-    } catch (error) {
-      showError('Cancel Failed', error instanceof Error ? error.message : 'Failed to cancel order.');
-    }
-    setPlacingOrder(false);
   };
 
   const handleOrderConfirm = async () => {
@@ -137,18 +103,15 @@ const Cart: React.FC = () => {
       // Optionally, you could update the order status here if needed
       const clearResult = await clearCart();
       if (!clearResult.success) {
-        showError('Cart Clear Failed', clearResult.error || 'Failed to clear cart after order.');
+        setLocalError(clearResult.error || 'Failed to clear cart after order.');
         setPlacingOrder(false);
         setShowOrderConfirm(false);
         return;
       }
       if (typeof refreshCart === 'function') await refreshCart();
-      showSuccess('Order Complete', 'Your order has been confirmed and cart cleared successfully!');
-      setTimeout(() => {
-        window.location.href = '/profile';
-      }, 2000);
+      window.location.href = '/profile';
     } catch {
-      showError('Order Failed', 'Failed to complete order.');
+      setLocalError('Failed to complete order.');
     }
     setPlacingOrder(false);
     setShowOrderConfirm(false);
@@ -351,7 +314,7 @@ const Cart: React.FC = () => {
           message="Did you send the WhatsApp message to confirm your order? Only after this your order will be placed as pending."
           confirmText={placingOrder ? "Placing..." : "Yes, I sent the message"}
           cancelText="Cancel"
-          onCancel={handleOrderCancel}
+          onCancel={() => setShowOrderConfirm(false)}
           onConfirm={handleOrderConfirm}
         />
       </div>

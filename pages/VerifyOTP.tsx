@@ -54,7 +54,7 @@ const VerifyOTP: React.FC = () => {
       } else {
         setError(result.error || 'Invalid OTP. Please try again.');
       }
-    } catch (err) {
+    } catch {
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
@@ -91,7 +91,7 @@ const VerifyOTP: React.FC = () => {
       } else {
         setError(result.error || 'Failed to reset password. Please try again.');
       }
-    } catch (err) {
+    } catch {
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
@@ -108,7 +108,7 @@ const VerifyOTP: React.FC = () => {
       const { apiService } = await import('../services/ApiService');
       await apiService.sendResetOTP(email);
       setSuccess('New OTP sent successfully! Please check your email.');
-    } catch (err) {
+    } catch {
       setError('Failed to resend OTP. Please try again.');
     } finally {
       setLoading(false);

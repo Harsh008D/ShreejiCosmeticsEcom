@@ -48,7 +48,7 @@ The frontend has been updated to use the API instead of localStorage. Key change
 #### Backend (.env)
 ```env
 PORT=5000
-MONGODB_URI=your_mongodb_connection_string
+MONGODB_URI=mongodb://localhost:27017/shreeji-cosmetics
 JWT_SECRET=your-secret-key-here
 NODE_ENV=development
 ```

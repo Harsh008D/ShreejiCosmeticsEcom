@@ -31,12 +31,9 @@ A full-stack Node.js/Express backend with MongoDB for the Shreeji Cosmetics e-co
    - Copy `config.env` and update the values:
    ```env
    PORT=5000
-   MONGODB_URI=your_mongodb_connection_string
-   SESSION_SECRET=your_session_secret_key
+   MONGODB_URI=mongodb://localhost:27017/shreeji-cosmetics
+   JWT_SECRET=your-secret-key-here
    NODE_ENV=development
-   EMAIL_USER=your_email@gmail.com
-   EMAIL_PASS=your_email_app_password
-   EMAIL_FROM=your_email@gmail.com
    ```
 
 3. **Start MongoDB:**

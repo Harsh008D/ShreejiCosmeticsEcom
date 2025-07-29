@@ -84,7 +84,7 @@ const Products: React.FC = () => {
       setProducts(result);
       // Only clear error if it was a filtering/searching error, not a real error
       if (error && error.startsWith('Something went wrong')) setError(null);
-    } catch (err: unknown) {
+    } catch {
       setError('Something went wrong while filtering or searching products.');
       setProducts([]);
     }

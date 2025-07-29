@@ -72,7 +72,7 @@ const UserProfile: React.FC = () => {
   ];
 
   // Get orders for current tab
-  let displayedOrders: any[] = [];
+  let displayedOrders: Record<string, unknown>[] = [];
   if (activeTab === 'pending') displayedOrders = pendingOrders;
   else if (activeTab === 'active') displayedOrders = activeOrders;
   else if (activeTab === 'history') displayedOrders = orderHistory;

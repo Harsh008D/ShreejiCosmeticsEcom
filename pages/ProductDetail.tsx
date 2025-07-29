@@ -32,7 +32,7 @@ const ProductDetail: React.FC = () => {
   // Add state for review delete dialog
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; reviewId: string | null }>({ open: false, reviewId: null });
   const [quantityError, setQuantityError] = useState('');
-  const { showError, showInfo, showSuccess } = useToast();
+  const { showError, showInfo } = useToast();
 
   // Helper to load product
   const loadProduct = async () => {
@@ -179,24 +179,11 @@ const ProductDetail: React.FC = () => {
       return;
     }
     setQuantityError('');
-    
-    try {
-      const result = await addToCart(product, quantity);
-      if (result.success) {
-        showSuccess('Added to Cart', `${product.name} (${quantity} item${quantity > 1 ? 's' : ''}) has been added to your cart`);
-      } else {
-        showError('Failed to Add', result.error || 'Failed to add item to cart');
-      }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        showError('Error', error.message || 'Failed to add item to cart');
-      } else {
-        showError('Error', 'Failed to add item to cart');
-      }
-    }
+    await addToCart(product, quantity);
+    // Optionally show success toast here if addToCart returns a result
   };
 
-  const handleWishlistToggle = async () => {
+  const handleWishlistToggle = () => {
     if (!user) {
       showInfo('Login Required', 'Please login to manage your wishlist');
       setError('');
@@ -207,29 +194,12 @@ const ProductDetail: React.FC = () => {
       setError('');
       return;
     }
-    
-    try {
-      if (isInWishlist(product.id)) {
-        const result = await removeFromWishlist(product.id);
-        if (result.success) {
-          showSuccess('Removed from Wishlist', `${product.name} has been removed from your wishlist`);
-        } else {
-          showError('Failed to Remove', result.error || 'Failed to remove item from wishlist');
-        }
-      } else {
-        const result = await addToWishlist(product);
-        if (result.success) {
-          showSuccess('Added to Wishlist', `${product.name} has been added to your wishlist`);
-        } else {
-          showError('Failed to Add', result.error || 'Failed to add item to wishlist');
-        }
-      }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        showError('Error', error.message || 'Failed to update wishlist');
-      } else {
-        showError('Error', 'Failed to update wishlist');
-      }
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id);
+      // Optionally show success toast here
+    } else {
+      addToWishlist(product);
+      // Optionally show success toast here
     }
   };
 
@@ -431,7 +401,7 @@ const ProductDetail: React.FC = () => {
               <form onSubmit={handleReviewSubmit} className="space-y-4 mb-8">
                 <div className="flex items-center gap-2">
                   <label className="font-medium">Your Rating:</label>
-                  {[1,2,3,4,5].map((star, idx) => (
+                  {[1,2,3,4,5].map((star) => (
                     <button
                       type="button"
                       key={star}

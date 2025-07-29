@@ -1,22 +1,15 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Upload, X, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { Upload, Trash2 } from 'lucide-react';
 import { ProductImage } from '../types';
 
 interface ImageUploadProps {
-  onImagesUploaded: (images: ProductImage[], files?: File[]) => void;
+  onImagesUploaded: (images: ProductImage[]) => void;
   existingImages?: ProductImage[];
   onImageDelete?: (publicId: string) => void;
   onImageMarkForDeletion?: (publicId: string) => void;
   maxImages?: number;
   disabled?: boolean;
   allowImmediateDelete?: boolean;
-}
-
-// Temporary image interface for local storage
-interface TempImage {
-  file: File;
-  preview: string;
-  id: string;
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
@@ -31,7 +24,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Remove local tempImages state - we'll use parent's state instead
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -57,7 +49,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     handleFiles(files);
   }, []);
 
-  const handleFiles = async (files: File[]) => {
+  const handleFiles = useCallback(async (files: File[]) => {
     if (disabled) return;
 
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
@@ -67,57 +59,53 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       return;
     }
 
-    // Count temporary images from existingImages (those with temp- prefix)
-    const tempImageCount = existingImages.filter(img => img.publicId.startsWith('temp-')).length;
     if (existingImages.length + imageFiles.length > maxImages) {
       setError(`Maximum ${maxImages} images allowed`);
       return;
     }
 
     setError(null);
+    setUploading(true);
 
-    // Create temporary ProductImage objects for the parent component
-    const tempProductImages: ProductImage[] = imageFiles.map((file, index) => ({
-      url: URL.createObjectURL(file),
-      publicId: `temp-${Date.now()}-${Math.random()}`,
-      isThumbnail: existingImages.length === 0 && index === 0 // First image is thumbnail if no existing images
-    }));
+    try {
+      const { apiService } = await import('../services/ApiService');
+      const result = await apiService.uploadImages(imageFiles);
+      onImagesUploaded(result.images);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to upload images';
+      setError(errorMessage);
+    } finally {
+      setUploading(false);
+    }
+  }, [disabled, existingImages.length, maxImages, onImagesUploaded]);
 
-    // Pass both the temporary images and the actual files
-    onImagesUploaded(tempProductImages, imageFiles);
-  };
-
-  const handleDeleteImage = async (publicId: string) => {
+  const handleDeleteImage = useCallback(async (publicId: string) => {
     if (disabled) return;
 
-    // Check if this is a temporary image
-    if (publicId.startsWith('temp-')) {
-      // For temporary images, just call the parent's delete function
-      onImageDelete?.(publicId);
-      return;
-    }
-
-    // For existing images (not temporary)
     if (allowImmediateDelete) {
-      // For new products, delete from Cloudinary immediately
+      // Immediate deletion (for new uploads that haven't been saved yet)
       try {
         console.log('Attempting to delete image with publicId:', publicId);
         const { apiService } = await import('../services/ApiService');
         const response = await apiService.deleteImage(publicId);
         console.log('Delete response:', response);
         
+        // Clear any previous errors
         setError(null);
+        
+        // Call the callback to update the parent component
         onImageDelete?.(publicId);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Delete image error:', err);
-        setError(err.message || 'Failed to delete image');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to delete image';
+        setError(errorMessage);
       }
     } else {
-      // For edit mode, mark for deletion
+      // Mark for deletion (for existing images in edit mode)
       console.log('Marking image for deletion:', publicId);
       onImageMarkForDeletion?.(publicId);
     }
-  };
+  }, [disabled, allowImmediateDelete, onImageDelete, onImageMarkForDeletion]);
 
   const openFileDialog = () => {
     fileInputRef.current?.click();
@@ -170,9 +158,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         </div>
       )}
 
-      {/* All Images - Combined View */}
+      {/* Existing Images */}
       {existingImages.length > 0 && (
         <div className="space-y-3">
+          <h4 className="font-medium text-gray-900">Current Images</h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {existingImages.map((image, index) => (
               <div key={image.publicId} className="relative group">
@@ -181,7 +170,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                   alt={`Product image ${index + 1}`}
                   className="w-24 h-24 md:w-48 md:h-48 object-cover rounded-lg mx-auto"
                 />
-                {/* Remove Thumbnail badge here */}
+                {image.isThumbnail && (
+                  <div className="absolute top-1 left-1 bg-emerald-500 text-white text-xs px-2 py-1 rounded">
+                    Thumbnail
+                  </div>
+                )}
                 {!disabled && (
                   <button
                     onClick={() => handleDeleteImage(image.publicId)}

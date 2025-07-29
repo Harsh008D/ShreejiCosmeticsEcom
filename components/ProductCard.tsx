@@ -27,7 +27,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: originalProduct }) =
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation(); // Stop event from bubbling up to the Link
     
     if (!user) {
       showInfo('Login Required', 'Please login to add items to your cart');
@@ -65,7 +64,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: originalProduct }) =
 
   const handleWishlistToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation(); // Stop event from bubbling up to the Link
     
     if (!user) {
       showInfo('Login Required', 'Please login to manage your wishlist');

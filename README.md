@@ -118,15 +118,12 @@ cd backend
 cp config.env.example config.env
 ```
 
-Edit `backend/config.env` with your configuration:
+Edit `backend/config.env`:
 ```env
 PORT=3001
-MONGODB_URI=your_mongodb_connection_string
-SESSION_SECRET=your_session_secret_key
+MONGODB_URI=mongodb://localhost:27017/shreeji-cosmetics
+SESSION_SECRET=your-super-secret-session-key-here
 NODE_ENV=development
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_email_app_password
-EMAIL_FROM=your_email@gmail.com
 ```
 
 ### 4. Start MongoDB
@@ -165,6 +162,16 @@ npm run dev
 - **Backend API**: http://localhost:3001
 - **API Health Check**: http://localhost:3001/api/health
 
+## 👤 Default Login Credentials
+
+### Admin Account
+- **Email**: admin@shreejicosmetics.com
+- **Password**: admin123
+
+### Sample User Account
+- **Email**: john@example.com
+- **Password**: admin123
+
 ## 📚 API Documentation
 
 ### Authentication Endpoints
@@ -174,9 +181,6 @@ POST /api/auth/login       - User login (session-based)
 GET  /api/auth/profile     - Get user profile
 PUT  /api/auth/profile     - Update user profile
 POST /api/auth/logout      - User logout
-POST /api/auth/send-reset-otp - Send password reset OTP
-POST /api/auth/verify-reset-otp - Verify OTP
-POST /api/auth/reset-password - Reset password with OTP
 ```
 
 ### Product Endpoints
@@ -273,12 +277,9 @@ PUT    /api/brand          - Update brand info (Admin)
 #### Backend (.env)
 ```env
 PORT=3001                          # Server port
-MONGODB_URI=your_mongodb_uri       # MongoDB connection string
-SESSION_SECRET=your_session_secret # Session signing secret
+MONGODB_URI=mongodb://localhost:27017/shreeji-cosmetics
+SESSION_SECRET=your-super-secret-key   # Session signing secret
 NODE_ENV=development               # Environment (development/production)
-EMAIL_USER=your_email@gmail.com    # Gmail for password reset
-EMAIL_PASS=your_app_password       # Gmail app password
-EMAIL_FROM=your_email@gmail.com    # From email address
 ```
 
 #### Frontend (vite.config.ts)
@@ -394,23 +395,6 @@ rm -rf node_modules package-lock.json
 npm install
 ```
 
-## 🚀 Deployment
-
-### Free Deployment Options
-- **Frontend**: Vercel (React hosting)
-- **Backend**: Railway (Node.js hosting)
-- **Database**: MongoDB Atlas (cloud database)
-
-### Environment Variables for Production
-Set these in your deployment platform:
-- `MONGODB_URI`: Your MongoDB Atlas connection string
-- `SESSION_SECRET`: A strong random string
-- `EMAIL_USER`: Your Gmail address
-- `EMAIL_PASS`: Your Gmail app password
-- `EMAIL_FROM`: Your Gmail address
-- `NODE_ENV`: production
-- `FRONTEND_URL`: Your frontend URL (for CORS)
-
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -423,6 +407,12 @@ Set these in your deployment platform:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## 🆘 Support
+
+For support and questions:
+- Create an issue in the repository
+- Contact: support@shreejicosmetics.com
+
 ## 🔄 Changelog
 
 ### Version 2.0.0 (Current)
@@ -434,8 +424,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - 📊 Complete admin panel
 - ⭐ Product reviews and ratings
 - 🛒 Advanced cart and wishlist functionality
-- 🔐 Password reset with OTP
-- 🚀 Free deployment ready
 
 ### Version 1.0.0
 - 🎉 Initial release

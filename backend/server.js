@@ -26,25 +26,9 @@ import uploadRoutes from './routes/upload.js';
 // Load environment variables
 dotenv.config({ path: './config.env' });
 
-// Check for required environment variables
-const requiredEnvVars = ['MONGODB_URI', 'SESSION_SECRET'];
-const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-
-if (missingVars.length > 0) {
-  console.error('❌ Missing required environment variables:', missingVars);
-  console.error('Please set the following variables:');
-  missingVars.forEach(varName => console.error(`- ${varName}`));
-  process.exit(1);
-}
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
-
-// Trust proxy for rate limiting in production
-if (NODE_ENV === 'production') {
-  app.set('trust proxy', 1);
-}
 
 // Security middleware
 app.use(helmet({
@@ -86,11 +70,7 @@ const authLimiter = rateLimit({
 // CORS configuration
 const corsOptions = {
   origin: NODE_ENV === 'production' 
-    ? [
-        'https://shreeji-cosmetics-ecoms.vercel.app', // Your Vercel domain
-        'https://your-custom-domain.com', // Replace with your custom domain
-        process.env.FRONTEND_URL // Allow environment variable override
-      ].filter(Boolean)
+    ? 'https://yourdomain.com' // Replace with your actual domain
     : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:4173'],
   credentials: true,
   optionsSuccessStatus: 200

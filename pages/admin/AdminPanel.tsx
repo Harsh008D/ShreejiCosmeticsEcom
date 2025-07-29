@@ -59,7 +59,7 @@ const AdminPanel: React.FC = () => {
       const orders = await apiService.getAllOrders();
       const pending = orders.filter((order: { status: string }) => order.status === 'pending').length;
       setPendingOrderCount(pending);
-    } catch (e: unknown) {
+    } catch {
       setPendingOrderCount(0);
     }
   }, []);
@@ -290,7 +290,6 @@ const ProductsTab: React.FC<{
     inStock: true,
     featured: false
   });
-  const [tempFiles, setTempFiles] = useState<{ [publicId: string]: File }>({});
   const [imagesMarkedForDeletion, setImagesMarkedForDeletion] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<{ category: string; inStock: boolean | undefined }>({ category: '', inStock: undefined });
@@ -367,26 +366,15 @@ const ProductsTab: React.FC<{
 
   const handleIngredientsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value: string = e.target.value;
-    // Allow empty lines so Enter works for new lines
-    const ingredients: string[] = value ? value.split('\n') : [];
+    const ingredients: string[] = value ? value.split('\n').filter(item => item.trim()) : [];
     setFormData(prev => ({ ...prev, ingredients }));
   };
 
-  const handleImagesUploaded = (newImages: ProductImage[], files?: File[]) => {
+  const handleImagesUploaded = (newImages: ProductImage[]) => {
     setFormData(prev => ({
       ...prev,
       images: [...(prev.images || []), ...newImages]
     }));
-    if (files) {
-      // Store files with their corresponding publicId
-      const newTempFiles: { [publicId: string]: File } = {};
-      newImages.forEach((img, index) => {
-        if (img.publicId.startsWith('temp-')) {
-          newTempFiles[img.publicId] = files[index];
-        }
-      });
-      setTempFiles(prev => ({ ...prev, ...newTempFiles }));
-    }
   };
 
   const handleImageDelete = (publicId: string) => {
@@ -395,14 +383,6 @@ const ProductsTab: React.FC<{
       ...prev,
       images: (prev.images || []).filter(img => img.publicId !== publicId)
     }));
-    
-    // If this is a temporary image, also remove from tempFiles
-    if (publicId.startsWith('temp-')) {
-      setTempFiles(prev => {
-        const { [publicId]: removed, ...rest } = prev;
-        return rest;
-      });
-    }
   };
 
   const handleImageMarkForDeletion = (publicId: string) => {
@@ -460,37 +440,46 @@ const ProductsTab: React.FC<{
       return;
     }
     if (confirmDialog.action === 'add' || confirmDialog.action === 'update') {
+      // Normalize images to always be array of objects
+      let normalizedImages: ProductImage[] = [];
+      if (Array.isArray(formData.images)) {
+        normalizedImages = formData.images.map((img, idx) => {
+          if (typeof img === 'string') {
+            return {
+              url: img,
+              publicId: 'legacy-' + idx,
+              isThumbnail: idx === 0,
+            };
+          }
+          return img;
+        });
+      }
+
+      // Prepare payload, only include fields that are provided
+      const payload: Partial<Product> = {
+        name: formData.name,
+        price: Number(formData.price),
+        description: formData.description,
+        ingredients: Array.isArray(formData.ingredients)
+          ? formData.ingredients
+          : [],
+        usage: formData.usage,
+        category: formData.category,
+        inStock: !!formData.inStock,
+        featured: !!formData.featured,
+        stockQuantity: formData.stockQuantity ?? 0,
+      };
+
+      // Only include image fields if they are provided
+      if (formData.image) {
+        payload.image = formData.image;
+      }
+      if (normalizedImages.length > 0) {
+        payload.images = normalizedImages;
+      }
       try {
         const productId = editingProduct?._id || editingProduct?.id;
         
-        // Handle temporary images first (upload to Cloudinary)
-        let finalImages: ProductImage[] = [];
-        
-        // Upload temporary files to Cloudinary
-        const tempFilesArray = Object.values(tempFiles);
-        if (tempFilesArray.length > 0) {
-          try {
-            console.log('Uploading', tempFilesArray.length, 'temporary files to Cloudinary');
-            const uploadResult = await apiService.uploadImages(tempFilesArray);
-            finalImages.push(...uploadResult.images);
-            console.log('Successfully uploaded temporary images:', uploadResult.images);
-          } catch (error) {
-            console.error('Failed to upload temporary images:', error);
-            showError('Upload Failed', 'Failed to upload some images. Please try again.');
-            return;
-          }
-        }
-        
-        // Add existing images (non-temporary)
-        if (Array.isArray(formData.images)) {
-          for (const img of formData.images) {
-            if (!img.publicId.startsWith('temp-')) {
-              // This is an existing image from Cloudinary
-              finalImages.push(img);
-            }
-          }
-        }
-
         // Delete marked images first (for update operations)
         if (editingProduct && productId && imagesMarkedForDeletion.length > 0) {
           console.log('Deleting marked images:', imagesMarkedForDeletion);
@@ -503,29 +492,6 @@ const ProductsTab: React.FC<{
               // Continue with other deletions even if one fails
             }
           }
-        }
-
-        // Prepare payload, only include fields that are provided
-        const payload: Partial<Product> = {
-          name: formData.name,
-          price: Number(formData.price),
-          description: formData.description,
-          ingredients: Array.isArray(formData.ingredients)
-            ? formData.ingredients
-            : [],
-          usage: formData.usage,
-          category: formData.category,
-          inStock: !!formData.inStock,
-          featured: !!formData.featured,
-          stockQuantity: formData.stockQuantity ?? 0,
-        };
-
-        // Only include image fields if they are provided
-        if (formData.image) {
-          payload.image = formData.image;
-        }
-        if (finalImages.length > 0) {
-          payload.images = finalImages;
         }
         
         if (editingProduct && productId) {
@@ -549,14 +515,13 @@ const ProductsTab: React.FC<{
           featured: false,
           stockQuantity: 0
         });
-        setTempFiles({});
         setImagesMarkedForDeletion([]);
         setEditingProduct(null);
         setShowProductForm(false);
         await loadProducts();
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Product save error:', err);
-        const errorMessage = err?.message || err?.error || 'Failed to save product.';
+        const errorMessage = err instanceof Error ? err.message : 'Failed to save product.';
         showError('Save Failed', errorMessage);
       }
       setConfirmDialog({ open: false, action: null });

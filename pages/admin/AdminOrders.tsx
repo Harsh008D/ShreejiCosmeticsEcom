@@ -244,7 +244,7 @@ const AdminOrders: React.FC = () => {
                             <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
                               <img 
                                 src={item.product?.images && Array.isArray(item.product.images) && item.product.images.length > 0
-                                  ? item.product.images.find((img: any) => img.isThumbnail)?.url || item.product.images[0].url
+                                  ? item.product.images.find((img: Record<string, unknown>) => img.isThumbnail)?.url || item.product.images[0].url
                                   : item.product?.image || 'https://via.placeholder.com/80x80?text=No+Image'} 
                                 alt={item.product?.name} 
                                 className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover"

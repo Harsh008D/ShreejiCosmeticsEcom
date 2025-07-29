@@ -51,7 +51,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setLoading(false);
     }
-  }, [user?.id]); // Changed from [user] to [user?.id] to prevent infinite loops
+  }, [user]);
 
   const refreshCart = async () => {
     await loadCart();
@@ -64,7 +64,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setCartItems([]);
       setError(null);
     }
-  }, [user?.id, loadCart]); // Changed from [user] to [user?.id]
+  }, [user, loadCart]);
 
   const addToCart = async (product: Product, quantity: number = 1): Promise<{ success: boolean; error?: string }> => {
     if (!user) {

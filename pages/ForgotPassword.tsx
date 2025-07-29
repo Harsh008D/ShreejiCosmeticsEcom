@@ -41,7 +41,7 @@ const ForgotPassword: React.FC = () => {
       } else {
         setError(result.error || 'Failed to send OTP. Please try again.');
       }
-    } catch (err) {
+    } catch {
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
@@ -65,7 +65,7 @@ const ForgotPassword: React.FC = () => {
       } else {
         setError(result.error || 'Failed to send OTP. Please try again.');
       }
-    } catch (err) {
+    } catch {
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);

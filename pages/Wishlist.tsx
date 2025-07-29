@@ -3,13 +3,11 @@ import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, ArrowRight } from 'lucide-react';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
-import { useToast } from '../context/ToastContext';
 import { Product } from '../types';
 
 const Wishlist: React.FC = () => {
   const { wishlistItems, removeFromWishlist, clearWishlist } = useWishlist();
   const { addToCart } = useCart();
-  const { showSuccess, showError } = useToast();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   // Ensure all wishlistItems have id set from _id if needed
@@ -19,21 +17,8 @@ const Wishlist: React.FC = () => {
     const pid = product.id;
     if (!pid) return;
     setLoadingId(pid);
-    try {
-      const cartResult = await addToCart(product, 1);
-      if (cartResult.success) {
-        const wishlistResult = await removeFromWishlist(pid);
-        if (wishlistResult.success) {
-          showSuccess('Moved to Cart', `${product.name} has been moved from wishlist to cart`);
-        } else {
-          showError('Wishlist Error', wishlistResult.error || 'Failed to remove from wishlist');
-        }
-      } else {
-        showError('Cart Error', cartResult.error || 'Failed to add to cart');
-      }
-    } catch (error: unknown) {
-      showError('Error', error instanceof Error ? error.message : 'Failed to move item to cart');
-    }
+    await addToCart(product, 1);
+    await removeFromWishlist(pid);
     setLoadingId(null);
   };
 
@@ -41,16 +26,7 @@ const Wishlist: React.FC = () => {
     const pid = product.id;
     if (!pid) return;
     setLoadingId(pid);
-    try {
-      const result = await removeFromWishlist(pid);
-      if (result.success) {
-        showSuccess('Removed from Wishlist', `${product.name} has been removed from your wishlist`);
-      } else {
-        showError('Failed to Remove', result.error || 'Failed to remove from wishlist');
-      }
-    } catch (error: unknown) {
-      showError('Error', error instanceof Error ? error.message : 'Failed to remove from wishlist');
-    }
+    await removeFromWishlist(pid);
     setLoadingId(null);
   };
 

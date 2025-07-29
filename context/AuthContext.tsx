@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setError(null);
         const userData = await apiService.checkAuthStatus();
         setUser(userData);
-      } catch (error: unknown) {
+      } catch {
         setUser(null);
         setError(null);
       } finally {
@@ -41,11 +41,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     };
     initializeAuth();
-    // Use error to avoid unused variable warning
-    if (error) {
-      // do nothing
-    }
-  }, [error]);
+  }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {

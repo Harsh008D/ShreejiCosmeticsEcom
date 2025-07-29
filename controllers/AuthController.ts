@@ -123,10 +123,7 @@ export class AuthController {
       // Clear local user data
       this.userModel.logout();
       return { success: true };
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error('Logout error:', error);
-      }
+    } catch {
       // Even if API call fails, clear local data
       this.userModel.logout();
       return { success: true };
@@ -144,7 +141,7 @@ export class AuthController {
         this.userModel.setUser(null);
         return { success: true };
       }
-    } catch (error: unknown) {
+    } catch {
       this.userModel.setUser(null);
       return { success: true };
     }
