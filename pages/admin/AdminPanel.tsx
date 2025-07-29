@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Package, Settings, BarChart3, Users, Plus, Edit, Trash2, Save, Filter, Search, Boxes } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -7,7 +7,7 @@ import apiService from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import AdminOrders from './AdminOrders';
-import ImageUpload from '../../components/ImageUpload';
+import ImageUpload, { ImageUploadRef } from '../../components/ImageUpload';
 
 const AdminPanel: React.FC = () => {
   const { user, isAdmin } = useAuth();
@@ -278,9 +278,9 @@ const ProductsTab: React.FC<{
     }
     return product.image || 'https://via.placeholder.com/400x400?text=No+Image';
   };
-  const [formData, setFormData] = useState<Partial<Omit<Product, 'ingredients'> & { ingredients: string[] }>>({
+  const [formData, setFormData] = useState<Partial<Product>>({
     name: '',
-    price: 0,
+    price: '',
     image: '',
     images: [],
     description: '',
@@ -288,9 +288,14 @@ const ProductsTab: React.FC<{
     usage: '',
     category: '',
     inStock: true,
-    featured: false
+    featured: false,
+    stockQuantity: 0,
+    rating: 0,
+    numReviews: 0
   });
   const [imagesMarkedForDeletion, setImagesMarkedForDeletion] = useState<string[]>([]);
+  const [localImages, setLocalImages] = useState<any[]>([]);
+  const imageUploadRef = useRef<ImageUploadRef>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<{ category: string; inStock: boolean | undefined }>({ category: '', inStock: undefined });
   const [sort, setSort] = useState('all');
@@ -377,6 +382,10 @@ const ProductsTab: React.FC<{
     }));
   };
 
+  const handleLocalImagesSelected = (images: any[]) => {
+    setLocalImages(images);
+  };
+
   const handleImageDelete = (publicId: string) => {
     // For new images that haven't been saved yet (immediate deletion)
     setFormData(prev => ({
@@ -440,82 +449,84 @@ const ProductsTab: React.FC<{
       return;
     }
     if (confirmDialog.action === 'add' || confirmDialog.action === 'update') {
-      // Normalize images to always be array of objects
-      let normalizedImages: ProductImage[] = [];
-      if (Array.isArray(formData.images)) {
-        normalizedImages = formData.images.map((img, idx) => {
-          if (typeof img === 'string') {
-            return {
-              url: img,
-              publicId: 'legacy-' + idx,
-              isThumbnail: idx === 0,
-            };
-          }
-          return img;
-        });
-      }
-
-      // Prepare payload, only include fields that are provided
-      const payload: Partial<Product> = {
-        name: formData.name,
-        price: Number(formData.price),
-        description: formData.description,
-        ingredients: Array.isArray(formData.ingredients)
-          ? formData.ingredients
-          : [],
-        usage: formData.usage,
-        category: formData.category,
-        inStock: !!formData.inStock,
-        featured: !!formData.featured,
-        stockQuantity: formData.stockQuantity ?? 0,
-      };
-
-      // Only include image fields if they are provided
-      if (formData.image) {
-        payload.image = formData.image;
-      }
-      if (normalizedImages.length > 0) {
-        payload.images = normalizedImages;
-      }
       try {
-        const productId = editingProduct?._id || editingProduct?.id;
-        
-        // Delete marked images first (for update operations)
-        if (editingProduct && productId && imagesMarkedForDeletion.length > 0) {
-          console.log('Deleting marked images:', imagesMarkedForDeletion);
-          for (const publicId of imagesMarkedForDeletion) {
-            try {
-              await apiService.deleteImage(publicId);
-              console.log('Successfully deleted image:', publicId);
-            } catch (err) {
-              console.error('Failed to delete image:', publicId, err);
-              // Continue with other deletions even if one fails
-            }
+        // Upload local images first if any
+        let uploadedImages: ProductImage[] = [];
+        if (localImages.length > 0 && imageUploadRef.current) {
+          try {
+            uploadedImages = await imageUploadRef.current.uploadLocalImages();
+          } catch (error) {
+            showError('Upload Failed', 'Failed to upload images. Please try again.');
+            return;
           }
         }
-        
-        if (editingProduct && productId) {
-          await apiService.updateProduct(productId, payload);
-          showSuccess('Product Updated', 'Product details have been successfully updated');
-        } else {
-          await apiService.createProduct(payload);
-          showSuccess('Product Added', 'Product has been successfully added');
+
+        // Normalize images to always be array of objects
+        let normalizedImages: ProductImage[] = [];
+        if (Array.isArray(formData.images)) {
+          normalizedImages = formData.images.map((img, idx) => {
+            if (typeof img === 'string') {
+              return {
+                url: img,
+                publicId: 'legacy-' + idx,
+                isThumbnail: idx === 0,
+              };
+            }
+            return img;
+          });
         }
-        // Reset form data
+
+        // Combine existing images with newly uploaded ones
+        const allImages = [...normalizedImages, ...uploadedImages];
+
+        // Prepare payload, only include fields that are provided
+        const payload: Partial<Product> = {
+          name: formData.name,
+          price: Number(formData.price),
+          description: formData.description,
+          ingredients: Array.isArray(formData.ingredients)
+            ? formData.ingredients
+            : [],
+          usage: formData.usage,
+          category: formData.category,
+          inStock: !!formData.inStock,
+          featured: !!formData.featured,
+          stockQuantity: Number(formData.stockQuantity) || 0,
+          rating: Number(formData.rating) || 0,
+          numReviews: Number(formData.numReviews) || 0,
+          images: allImages
+        };
+
+        if (formData.image) {
+          payload.image = formData.image;
+        }
+
+        if (confirmDialog.action === 'add') {
+          await apiService.createProduct(payload);
+          showSuccess('Product Added', 'Product has been successfully created');
+        } else if (confirmDialog.action === 'update' && editingProduct) {
+          await apiService.updateProduct(editingProduct.id!, payload);
+          showSuccess('Product Updated', 'Product has been successfully updated');
+        }
+
+        // Reset form
         setFormData({
-          name: '', 
-          price: 0, 
-          image: '', 
-          images: [], 
-          description: '', 
-          ingredients: [], 
-          usage: '', 
-          category: '', 
-          inStock: true, 
+          name: '',
+          price: '',
+          image: '',
+          images: [],
+          description: '',
+          ingredients: [],
+          usage: '',
+          category: '',
+          inStock: true,
           featured: false,
-          stockQuantity: 0
+          stockQuantity: 0,
+          rating: 0,
+          numReviews: 0
         });
         setImagesMarkedForDeletion([]);
+        setLocalImages([]);
         setEditingProduct(null);
         setShowProductForm(false);
         await loadProducts();
@@ -655,14 +666,17 @@ const ProductsTab: React.FC<{
             setEditingProduct(null);
             setFormData({
               name: '',
-              price: 0,
+              price: '',
               image: '',
               description: '',
               ingredients: [],
               usage: '',
               category: '',
               inStock: true,
-              featured: false
+              featured: false,
+              stockQuantity: 0,
+              rating: 0,
+              numReviews: 0
             });
             setImagesMarkedForDeletion([]);
             setShowProductForm(true);
@@ -722,12 +736,15 @@ const ProductsTab: React.FC<{
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
               <ImageUpload
+                ref={imageUploadRef}
                 onImagesUploaded={handleImagesUploaded}
-                existingImages={formData.images || []}
+                existingImages={editingProduct?.images || []}
                 onImageDelete={handleImageDelete}
                 onImageMarkForDeletion={handleImageMarkForDeletion}
                 maxImages={10}
                 allowImmediateDelete={!editingProduct}
+                delayedUpload={!editingProduct} // Enable delayed upload for new products
+                onLocalImagesSelected={handleLocalImagesSelected}
               />
             </div>
 
@@ -834,7 +851,7 @@ const ProductsTab: React.FC<{
                   // Reset form data
                   setFormData({
                     name: '', 
-                    price: 0, 
+                    price: '', 
                     image: '', 
                     images: [], 
                     description: '', 
@@ -843,7 +860,9 @@ const ProductsTab: React.FC<{
                     category: '', 
                     inStock: true, 
                     featured: false,
-                    stockQuantity: 0
+                    stockQuantity: 0,
+                    rating: 0,
+                    numReviews: 0
                   });
                   setImagesMarkedForDeletion([]);
                 }}

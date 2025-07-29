@@ -1,29 +1,44 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Upload, Trash2 } from 'lucide-react';
 import { ProductImage } from '../types';
 
+interface LocalImage {
+  file: File;
+  preview: string;
+  id: string;
+}
+
 interface ImageUploadProps {
   onImagesUploaded: (images: ProductImage[]) => void;
+  onLocalImagesSelected?: (images: LocalImage[]) => void;
   existingImages?: ProductImage[];
   onImageDelete?: (publicId: string) => void;
   onImageMarkForDeletion?: (publicId: string) => void;
   maxImages?: number;
   disabled?: boolean;
   allowImmediateDelete?: boolean;
+  delayedUpload?: boolean; // New prop for delayed upload mode
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({
+export interface ImageUploadRef {
+  uploadLocalImages: () => Promise<ProductImage[]>;
+}
+
+const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
   onImagesUploaded,
+  onLocalImagesSelected,
   existingImages = [],
   onImageDelete,
   onImageMarkForDeletion,
   maxImages = 10,
   disabled = false,
-  allowImmediateDelete = false
-}) => {
+  allowImmediateDelete = false,
+  delayedUpload = false
+}, ref) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [localImages, setLocalImages] = useState<LocalImage[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -59,25 +74,39 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       return;
     }
 
-    if (existingImages.length + imageFiles.length > maxImages) {
+    const totalImages = existingImages.length + localImages.length + imageFiles.length;
+    if (totalImages > maxImages) {
       setError(`Maximum ${maxImages} images allowed`);
       return;
     }
 
     setError(null);
-    setUploading(true);
 
-    try {
-      const { apiService } = await import('../services/ApiService');
-      const result = await apiService.uploadImages(imageFiles);
-      onImagesUploaded(result.images);
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to upload images';
-      setError(errorMessage);
-    } finally {
-      setUploading(false);
+    if (delayedUpload) {
+      // Store images locally for delayed upload
+      const newLocalImages: LocalImage[] = imageFiles.map(file => ({
+        file,
+        preview: URL.createObjectURL(file),
+        id: Math.random().toString(36).substr(2, 9)
+      }));
+      
+      setLocalImages(prev => [...prev, ...newLocalImages]);
+      onLocalImagesSelected?.(newLocalImages);
+    } else {
+      // Immediate upload to Cloudinary
+      setUploading(true);
+      try {
+        const { apiService } = await import('../services/ApiService');
+        const result = await apiService.uploadImages(imageFiles);
+        onImagesUploaded(result.images);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to upload images';
+        setError(errorMessage);
+      } finally {
+        setUploading(false);
+      }
     }
-  }, [disabled, existingImages.length, maxImages, onImagesUploaded]);
+  }, [disabled, existingImages.length, localImages.length, maxImages, onImagesUploaded, onLocalImagesSelected, delayedUpload]);
 
   const handleDeleteImage = useCallback(async (publicId: string) => {
     if (disabled) return;
@@ -107,9 +136,48 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     }
   }, [disabled, allowImmediateDelete, onImageDelete, onImageMarkForDeletion]);
 
+  const handleDeleteLocalImage = useCallback((id: string) => {
+    setLocalImages(prev => {
+      const imageToRemove = prev.find(img => img.id === id);
+      if (imageToRemove) {
+        URL.revokeObjectURL(imageToRemove.preview);
+      }
+      return prev.filter(img => img.id !== id);
+    });
+  }, []);
+
   const openFileDialog = () => {
     fileInputRef.current?.click();
   };
+
+  // Function to upload local images to Cloudinary
+  const uploadLocalImages = useCallback(async (): Promise<ProductImage[]> => {
+    if (localImages.length === 0) return [];
+    
+    setUploading(true);
+    try {
+      const { apiService } = await import('../services/ApiService');
+      const files = localImages.map(img => img.file);
+      const result = await apiService.uploadImages(files);
+      
+      // Clean up local images
+      localImages.forEach(img => URL.revokeObjectURL(img.preview));
+      setLocalImages([]);
+      
+      return result.images;
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to upload images';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setUploading(false);
+    }
+  }, [localImages]);
+
+  // Expose upload function to parent via ref
+  useImperativeHandle(ref, () => ({
+    uploadLocalImages
+  }), [uploadLocalImages]);
 
   return (
     <div className="space-y-4">
@@ -131,6 +199,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         </p>
         <p className="text-xs text-gray-500">
           Maximum {maxImages} images, 5MB each
+          {delayedUpload && ' (Images will be uploaded when you save the product)'}
         </p>
         <input
           ref={fileInputRef}
@@ -155,6 +224,35 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       {error && (
         <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">
           {error}
+        </div>
+      )}
+
+      {/* Local Images Preview */}
+      {delayedUpload && localImages.length > 0 && (
+        <div className="space-y-3">
+          <h4 className="font-medium text-gray-900">Selected Images (Preview)</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {localImages.map((image) => (
+              <div key={image.id} className="relative group">
+                <img
+                  src={image.preview}
+                  alt="Selected image preview"
+                  className="w-24 h-24 md:w-48 md:h-48 object-cover rounded-lg mx-auto"
+                />
+                <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                  Preview
+                </div>
+                {!disabled && (
+                  <button
+                    onClick={() => handleDeleteLocalImage(image.id)}
+                    className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -190,6 +288,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       )}
     </div>
   );
-};
+});
 
 export default ImageUpload; 
