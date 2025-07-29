@@ -118,14 +118,14 @@ app.use(session({
   }
 }));
 
-// CSRF protection (enabled in production only)
-if (NODE_ENV === 'production') {
-  app.use(csurf({ cookie: false }));
-  // Expose CSRF token for frontend
-  app.get('/api/csrf-token', (req, res) => {
-    res.json({ csrfToken: req.csrfToken() });
-  });
-}
+// CSRF protection (disabled for now to fix API issues)
+// if (NODE_ENV === 'production') {
+//   app.use(csurf({ cookie: false }));
+//   // Expose CSRF token for frontend
+//   app.get('/api/csrf-token', (req, res) => {
+//     res.json({ csrfToken: req.csrfToken() });
+//   });
+// }
 
 // Data sanitization against NoSQL query injection
 app.use(mongoSanitize());
