@@ -494,7 +494,23 @@ const ProductsTab: React.FC<{
       try {
         console.log('Starting product save process...');
         console.log('Local images count:', localImages.length);
+        console.log('Images marked for deletion:', imagesMarkedForDeletion);
         console.log('Image upload ref:', imageUploadRef.current);
+        
+        // For edit mode: Delete marked images from Cloudinary first
+        if (confirmDialog.action === 'update' && imagesMarkedForDeletion.length > 0) {
+          console.log('Deleting marked images from Cloudinary...');
+          for (const publicId of imagesMarkedForDeletion) {
+            try {
+              const { apiService } = await import('../../services/ApiService');
+              await apiService.deleteImage(publicId);
+              console.log('Successfully deleted image from Cloudinary:', publicId);
+            } catch (error) {
+              console.error('Failed to delete image from Cloudinary:', publicId, error);
+              // Continue with other operations even if one deletion fails
+            }
+          }
+        }
         
         // Upload local images first if any
         let uploadedImages: ProductImage[] = [];
@@ -808,8 +824,8 @@ const ProductsTab: React.FC<{
                 onImageDelete={handleImageDelete}
                 onImageMarkForDeletion={handleImageMarkForDeletion}
                 maxImages={10}
-                allowImmediateDelete={!editingProduct}
-                delayedUpload={!editingProduct} // Enable delayed upload for new products
+                allowImmediateDelete={false} // Disable immediate delete for both new and edit
+                delayedUpload={true} // Enable delayed upload for both new and edit products
                 onLocalImagesSelected={handleLocalImagesSelected}
               />
             </div>
