@@ -39,8 +39,6 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [localImages, setLocalImages] = useState<LocalImage[]>([]);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [imageToDelete, setImageToDelete] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -132,25 +130,11 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
         setError(errorMessage);
       }
     } else {
-      // Show confirmation dialog for delayed deletion
-      setImageToDelete(publicId);
-      setShowDeleteConfirm(true);
+      // Mark for deletion (for existing images in edit mode) - no confirmation needed
+      console.log('Marking image for deletion:', publicId);
+      onImageMarkForDeletion?.(publicId);
     }
   }, [disabled, allowImmediateDelete, onImageDelete, onImageMarkForDeletion]);
-
-  const confirmDeleteImage = useCallback(() => {
-    if (imageToDelete) {
-      console.log('Marking image for deletion:', imageToDelete);
-      onImageMarkForDeletion?.(imageToDelete);
-      setImageToDelete(null);
-      setShowDeleteConfirm(false);
-    }
-  }, [imageToDelete, onImageMarkForDeletion]);
-
-  const cancelDeleteImage = useCallback(() => {
-    setImageToDelete(null);
-    setShowDeleteConfirm(false);
-  }, []);
 
   const handleDeleteLocalImage = useCallback((id: string) => {
     setLocalImages(prev => {
@@ -308,34 +292,6 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
                 )}
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Dialog */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-            <div className="text-center">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Delete Image?</h3>
-              <p className="text-gray-600 mb-6">
-                This image will be removed when you save the product. This action cannot be undone.
-              </p>
-              <div className="flex space-x-4">
-                <button
-                  onClick={cancelDeleteImage}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmDeleteImage}
-                  className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       )}
