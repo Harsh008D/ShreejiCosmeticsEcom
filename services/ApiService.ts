@@ -59,31 +59,31 @@ class ApiService {
 
   // Authentication endpoints
   async login(credentials: LoginCredentials): Promise<User> {
-    return this.request<User>('/auth/login', {
+    return this.request<User>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
   }
 
   async register(userData: Omit<RegisterData, 'confirmPassword'>): Promise<User> {
-    return this.request<User>('/auth/register', {
+    return this.request<User>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
   }
 
   async logout(): Promise<ApiResponse> {
-    return this.request('/auth/logout', {
+    return this.request('/api/auth/logout', {
       method: 'POST',
     });
   }
 
   async checkAuthStatus(): Promise<User> {
-    return this.request<User>('/auth/profile');
+    return this.request<User>('/api/auth/profile');
   }
 
   async updateProfile(profileData: Partial<User>): Promise<User> {
-    return this.request<User>('/auth/profile', {
+    return this.request<User>('/api/auth/profile', {
       method: 'PUT',
       body: JSON.stringify(profileData),
     });
@@ -91,21 +91,21 @@ class ApiService {
 
   // Password reset endpoints
   async sendResetOTP(email: string): Promise<{ message: string; email: string }> {
-    return this.request<{ message: string; email: string }>('/auth/send-reset-otp', {
+    return this.request<{ message: string; email: string }>('/api/auth/send-reset-otp', {
       method: 'POST',
       body: JSON.stringify({ email }),
     });
   }
 
   async verifyResetOTP(email: string, otp: string): Promise<{ message: string; email: string }> {
-    return this.request<{ message: string; email: string }>('/auth/verify-reset-otp', {
+    return this.request<{ message: string; email: string }>('/api/auth/verify-reset-otp', {
       method: 'POST',
       body: JSON.stringify({ email, otp }),
     });
   }
 
   async resetPassword(email: string, otp: string, password: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>('/auth/reset-password', {
+    return this.request<{ message: string }>('/api/auth/reset-password', {
       method: 'POST',
       body: JSON.stringify({ email, otp, password }),
     });
@@ -113,12 +113,12 @@ class ApiService {
 
   // Product endpoints
   async getProducts(): Promise<Product[]> {
-    const response = await this.request<{ products: Record<string, unknown>[] }>('/products');
+    const response = await this.request<{ products: Record<string, unknown>[] }>('/api/products');
     return mapProductsArray(response.products || []);
   }
 
   async getProductById(id: string): Promise<Product | undefined> {
-    const product = await this.request<Record<string, unknown>>(`/products/${id}`);
+    const product = await this.request<Record<string, unknown>>(`/api/products/${id}`);
     return product ? mapProductId(product) : undefined;
   }
 
@@ -132,7 +132,7 @@ class ApiService {
     // Remove id/_id from payload
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, _id, ...payload } = product;
-    return this.request<Record<string, unknown>>('/products', {
+    return this.request<Record<string, unknown>>('/api/products', {
       method: 'POST',
       body: JSON.stringify(payload),
     }).then(mapProductId);
@@ -143,7 +143,7 @@ class ApiService {
     // Remove id/_id from payload
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, _id, ...payload } = product;
-    return this.request<Record<string, unknown>>(`/products/${productId}`, {
+    return this.request<Record<string, unknown>>(`/api/products/${productId}`, {
       method: 'PUT',
       body: JSON.stringify(payload),
     }).then(mapProductId);
@@ -151,77 +151,77 @@ class ApiService {
 
   // Delete product (Admin)
   async deleteProduct(productId: string): Promise<ApiResponse> {
-    return this.request(`/products/${productId}`, {
+    return this.request(`/api/products/${productId}`, {
       method: 'DELETE',
     });
   }
 
   async getProductsByCategory(category: string): Promise<Product[]> {
-    const response = await this.request<{ products: Record<string, unknown>[] }>(`/products/category/${category}`);
+    const response = await this.request<{ products: Record<string, unknown>[] }>(`/api/products/category/${category}`);
     return mapProductsArray(response.products || []);
   }
 
   async getProductsByBrand(brand: string): Promise<Product[]> {
-    const response = await this.request<{ products: Record<string, unknown>[] }>(`/products/brand/${brand}`);
+    const response = await this.request<{ products: Record<string, unknown>[] }>(`/api/products/brand/${brand}`);
     return mapProductsArray(response.products || []);
   }
 
   async searchProducts(query: string): Promise<Product[]> {
-    const response = await this.request<{ products: Record<string, unknown>[] }>(`/products/search?q=${encodeURIComponent(query)}`);
+    const response = await this.request<{ products: Record<string, unknown>[] }>(`/api/products/search?q=${encodeURIComponent(query)}`);
     return mapProductsArray(response.products || []);
   }
 
   // Featured products endpoint
   async getFeaturedProducts(): Promise<Product[]> {
-    const products = await this.request<Record<string, unknown>[]>('/products/featured');
+    const products = await this.request<Record<string, unknown>[]>('/api/products/featured');
     return mapProductsArray(products || []);
   }
 
   // Cart endpoints
   async getCart(): Promise<{ items: CartItem[] }> {
-    return this.request<{ items: CartItem[] }>('/cart');
+    return this.request<{ items: CartItem[] }>('/api/cart');
   }
 
   async addToCart(productId: string, quantity: number = 1): Promise<ApiResponse> {
-    return this.request('/cart', {
+    return this.request('/api/cart', {
       method: 'POST',
       body: JSON.stringify({ productId, quantity }),
     });
   }
 
   async updateCartItem(productId: string, quantity: number): Promise<ApiResponse> {
-    return this.request(`/cart/${productId}`, {
+    return this.request(`/api/cart/${productId}`, {
       method: 'PUT',
       body: JSON.stringify({ quantity }),
     });
   }
 
   async removeFromCart(productId: string): Promise<ApiResponse> {
-    return this.request(`/cart/${productId}`, {
+    return this.request(`/api/cart/${productId}`, {
       method: 'DELETE',
     });
   }
 
   async clearCart(): Promise<ApiResponse> {
-    return this.request('/cart', {
+    return this.request('/api/cart', {
       method: 'DELETE',
     });
   }
 
   // Wishlist endpoints
   async getWishlist(): Promise<ApiResponse> {
-    return this.request('/wishlist');
+    return this.request('/api/wishlist');
   }
 
   async addToWishlist(productId: string): Promise<ApiResponse> {
-    return this.request('/wishlist', {
+    return this.request('/api/wishlist', {
       method: 'POST',
       body: JSON.stringify({ productId }),
     });
   }
 
   async removeFromWishlist(productId: string): Promise<ApiResponse> {
-    return this.request(`/wishlist/${productId}`, {
+    return this.request(`/api/wishlist/${productId}`, {
       method: 'DELETE',
     });
   }
@@ -229,14 +229,14 @@ class ApiService {
   // Review endpoints
   async getProductReviews(productId: string): Promise<Record<string, unknown>[]> {
     // Use the correct backend endpoint for fetching reviews
-    return this.request(`/reviews/product/${productId}`);
+    return this.request(`/api/reviews/product/${productId}`);
   }
 
   async addProductReview(productId: string, review: {
     rating: number;
     comment: string;
   }): Promise<ApiResponse> {
-    return this.request(`/products/${productId}/reviews`, {
+    return this.request(`/api/products/${productId}/reviews`, {
       method: 'POST',
       body: JSON.stringify(review),
     });
@@ -246,21 +246,21 @@ class ApiService {
     rating: number;
     comment: string;
   }): Promise<ApiResponse> {
-    return this.request(`/reviews/${reviewId}`, {
+    return this.request(`/api/reviews/${reviewId}`, {
       method: 'PUT',
       body: JSON.stringify(review),
     });
   }
 
   async deleteProductReview(reviewId: string): Promise<ApiResponse> {
-    return this.request(`/reviews/${reviewId}`, {
+    return this.request(`/api/reviews/${reviewId}`, {
       method: 'DELETE',
     });
   }
 
   // Add a review (use /reviews/ endpoint for POST)
   async addReview(productId: string, rating: number, comment: string): Promise<Record<string, unknown>> {
-    return this.request('/reviews/', {
+    return this.request('/api/reviews/', {
       method: 'POST',
       body: JSON.stringify({ productId, rating, comment }),
     });
@@ -273,7 +273,7 @@ class ApiService {
 
   // Update a review
   async updateReview(reviewId: string, rating: number, comment: string): Promise<Record<string, unknown>> {
-    return this.request(`/reviews/${reviewId}`, {
+    return this.request(`/api/reviews/${reviewId}`, {
       method: 'PUT',
       body: JSON.stringify({ rating, comment }),
     });
@@ -281,18 +281,18 @@ class ApiService {
 
   // Delete a review
   async deleteReview(reviewId: string): Promise<Record<string, unknown>> {
-    return this.request(`/reviews/${reviewId}`, {
+    return this.request(`/api/reviews/${reviewId}`, {
       method: 'DELETE',
     });
   }
 
   // Brand endpoints
   async getBrandInfo(): Promise<ApiResponse> {
-    return this.request('/brand');
+    return this.request('/api/brand');
   }
 
   async updateBrandInfo(brandInfo: Record<string, unknown>): Promise<ApiResponse> {
-    return this.request('/brand', {
+    return this.request('/api/brand', {
       method: 'PUT',
       body: JSON.stringify(brandInfo),
     });
@@ -300,40 +300,40 @@ class ApiService {
 
   // Order endpoints
   async placeOrder(items: { product: string; quantity: number; price: number }[], status: string = 'pending'): Promise<Record<string, unknown>> {
-    return this.request('/orders', {
+    return this.request('/api/orders', {
       method: 'POST',
       body: JSON.stringify({ items, status }),
     });
   }
 
   async getMyOrders(): Promise<Record<string, unknown>[]> {
-    return this.request('/orders/my');
+    return this.request('/api/orders/my');
   }
 
   async cancelOrder(orderId: string): Promise<Record<string, unknown>> {
-    return this.request(`/orders/${orderId}/cancel`, {
+    return this.request(`/api/orders/${orderId}/cancel`, {
       method: 'POST',
     });
   }
 
   // Admin: Get all orders
   async getAllOrders(): Promise<Record<string, unknown>[]> {
-    return this.request('/orders');
+    return this.request('/api/orders');
   }
 
   // Admin: Cancel any order
   async adminCancelOrder(orderId: string): Promise<Record<string, unknown>> {
-    return this.request(`/orders/${orderId}/admin-cancel`, { method: 'POST' });
+    return this.request(`/api/orders/${orderId}/admin-cancel`, { method: 'POST' });
   }
 
   // Admin: Mark any order as delivered
   async markOrderDelivered(orderId: string): Promise<Record<string, unknown>> {
-    return this.request(`/orders/${orderId}/deliver`, { method: 'POST' });
+    return this.request(`/api/orders/${orderId}/deliver`, { method: 'POST' });
   }
 
   // Admin: Confirm a pending order
   async confirmOrder(orderId: string, status: string = 'active'): Promise<Record<string, unknown>> {
-    return this.request(`/orders/${orderId}/confirm`, {
+    return this.request(`/api/orders/${orderId}/confirm`, {
       method: 'POST',
       body: JSON.stringify({ status }),
       headers: { 'Content-Type': 'application/json' },
@@ -342,7 +342,7 @@ class ApiService {
 
   // User endpoints
   async getUsers(): Promise<User[]> {
-    const response = await this.request<Record<string, unknown>[]>('/users');
+    const response = await this.request<Record<string, unknown>[]>('/api/users');
     // The backend returns an array of users directly
     return (response || []).map((user: Record<string, unknown>) => ({ 
       ...user, 
@@ -357,7 +357,7 @@ class ApiService {
       formData.append('images', file);
     });
 
-    const response = await fetch(`${this.baseUrl}/upload/images`, {
+    const response = await fetch(`${this.baseUrl}/api/upload/images`, {
       method: 'POST',
       body: formData,
       credentials: 'include',
@@ -372,13 +372,13 @@ class ApiService {
   }
 
   async deleteImage(publicId: string): Promise<ApiResponse> {
-    return this.request(`/upload/images/${publicId}`, {
+    return this.request(`/api/upload/images/${publicId}`, {
       method: 'DELETE',
     });
   }
 
   async setThumbnail(publicId: string, productId: string): Promise<ApiResponse> {
-    return this.request(`/upload/thumbnail/${publicId}`, {
+    return this.request(`/api/upload/thumbnail/${publicId}`, {
       method: 'PUT',
       body: JSON.stringify({ productId }),
     });
