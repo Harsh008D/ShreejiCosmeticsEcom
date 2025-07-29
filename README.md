@@ -118,10 +118,10 @@ cd backend
 cp config.env.example config.env
 ```
 
-Edit `backend/config.env`:
+Edit `backend/config.env` with your own values:
 ```env
 PORT=3001
-MONGODB_URI=mongodb://localhost:27017/shreeji-cosmetics
+MONGODB_URI=your-mongodb-connection-string
 SESSION_SECRET=your-super-secret-session-key-here
 NODE_ENV=development
 ```
@@ -161,16 +161,6 @@ npm run dev
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:3001
 - **API Health Check**: http://localhost:3001/api/health
-
-## 👤 Default Login Credentials
-
-### Admin Account
-- **Email**: admin@shreejicosmetics.com
-- **Password**: admin123
-
-### Sample User Account
-- **Email**: john@example.com
-- **Password**: admin123
 
 ## 📚 API Documentation
 
@@ -277,7 +267,7 @@ PUT    /api/brand          - Update brand info (Admin)
 #### Backend (.env)
 ```env
 PORT=3001                          # Server port
-MONGODB_URI=mongodb://localhost:27017/shreeji-cosmetics
+MONGODB_URI=your-mongodb-connection-string
 SESSION_SECRET=your-super-secret-key   # Session signing secret
 NODE_ENV=development               # Environment (development/production)
 ```
@@ -411,7 +401,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For support and questions:
 - Create an issue in the repository
-- Contact: support@shreejicosmetics.com
 
 ## 🔄 Changelog
 
