@@ -85,15 +85,12 @@ if (NODE_ENV === 'production') {
 // CORS configuration
 const corsOptions = {
   origin: NODE_ENV === 'production' 
-    ? [
-        'https://shreeji-cosmetics-ecoms.vercel.app', // Your Vercel domain
-        'https://shreeji-cosmetics.vercel.app', // Alternative domain
-        process.env.FRONTEND_URL, // Allow environment variable override
-        'https://your-custom-domain.com' // Replace with your custom domain
-      ].filter(Boolean)
+    ? true // Allow all origins in production for now
     : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:4173'],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
 
 app.use(cors(corsOptions));
