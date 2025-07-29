@@ -494,12 +494,17 @@ const ProductsTab: React.FC<{
           featured: !!formData.featured,
           stockQuantity: Number(formData.stockQuantity) || 0,
           rating: Number(formData.rating) || 0,
-          numReviews: Number(formData.numReviews) || 0,
-          images: allImages
+          numReviews: Number(formData.numReviews) || 0
         };
 
+        // Only include image fields if they are provided
         if (formData.image) {
           payload.image = formData.image;
+        }
+        
+        // Always include images array if we have any images
+        if (allImages.length > 0) {
+          payload.images = allImages;
         }
 
         if (confirmDialog.action === 'add') {
