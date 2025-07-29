@@ -407,11 +407,12 @@ const ProductsTab: React.FC<{
     if (!data.name || data.name.length < 2) return 'Product name must be at least 2 characters.';
     if (data.price === undefined || data.price === null || isNaN(Number(data.price)) || Number(data.price) < 0) return 'Product price is required and must be non-negative.';
     
-    // For new products, require either image URL or uploaded images
+    // For new products, require either image URL, uploaded images, or local images
     if (!editingProduct) {
       const hasImageUrl = data.image && /^https?:\/\//.test(data.image);
       const hasUploadedImages = data.images && data.images.length > 0;
-      if (!hasImageUrl && !hasUploadedImages) {
+      const hasLocalImages = localImages.length > 0;
+      if (!hasImageUrl && !hasUploadedImages && !hasLocalImages) {
         return 'Product must have either an image URL or uploaded images.';
       }
     }
