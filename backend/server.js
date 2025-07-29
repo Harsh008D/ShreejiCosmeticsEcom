@@ -26,6 +26,16 @@ import uploadRoutes from './routes/upload.js';
 // Load environment variables
 dotenv.config({ path: './config.env' });
 
+// Environment variable validation
+const requiredEnvVars = ['MONGODB_URI', 'SESSION_SECRET'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error('❌ Missing required environment variables:', missingVars);
+  console.error('Please check your config.env file or Railway environment variables');
+  process.exit(1);
+}
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -67,10 +77,20 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Trust proxy for Railway
+if (NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // CORS configuration
 const corsOptions = {
   origin: NODE_ENV === 'production' 
-    ? 'https://yourdomain.com' // Replace with your actual domain
+    ? [
+        'https://shreeji-cosmetics-ecoms.vercel.app', // Your Vercel domain
+        'https://shreeji-cosmetics.vercel.app', // Alternative domain
+        process.env.FRONTEND_URL, // Allow environment variable override
+        'https://your-custom-domain.com' // Replace with your custom domain
+      ].filter(Boolean)
     : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:4173'],
   credentials: true,
   optionsSuccessStatus: 200
