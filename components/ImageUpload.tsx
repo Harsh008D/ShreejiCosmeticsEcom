@@ -109,10 +109,18 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
   }, [disabled, existingImages.length, localImages.length, maxImages, onImagesUploaded, onLocalImagesSelected, delayedUpload]);
 
   const handleDeleteImage = useCallback(async (publicId: string) => {
-    if (disabled) return;
+    console.log('handleDeleteImage called with publicId:', publicId);
+    console.log('disabled:', disabled);
+    console.log('allowImmediateDelete:', allowImmediateDelete);
+    
+    if (disabled) {
+      console.log('Component is disabled, returning');
+      return;
+    }
 
     if (allowImmediateDelete) {
       // Immediate deletion (for new uploads that haven't been saved yet)
+      console.log('Performing immediate deletion');
       try {
         console.log('Attempting to delete image with publicId:', publicId);
         const { apiService } = await import('../services/ApiService');
@@ -132,6 +140,7 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
     } else {
       // Mark for deletion (for existing images in edit mode) - no confirmation needed
       console.log('Marking image for deletion:', publicId);
+      console.log('onImageMarkForDeletion function:', onImageMarkForDeletion);
       onImageMarkForDeletion?.(publicId);
     }
   }, [disabled, allowImmediateDelete, onImageDelete, onImageMarkForDeletion]);
@@ -249,11 +258,7 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
                   alt={`Product image ${index + 1}`}
                   className="w-24 h-24 md:w-48 md:h-48 object-cover rounded-lg mx-auto"
                 />
-                {image.isThumbnail && (
-                  <div className="absolute top-1 left-1 bg-emerald-500 text-white text-xs px-2 py-1 rounded">
-                    Thumbnail
-                  </div>
-                )}
+                {/* Removed Thumbnail badge */}
                 {!disabled && (
                   <button
                     onClick={(e) => {

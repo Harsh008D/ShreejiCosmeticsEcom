@@ -431,12 +431,23 @@ const ProductsTab: React.FC<{
   };
 
   const handleImageMarkForDeletion = (publicId: string) => {
+    console.log('handleImageMarkForDeletion called with publicId:', publicId);
     // For existing images in edit mode (mark for deletion)
-    setImagesMarkedForDeletion(prev => [...prev, publicId]);
-    setFormData(prev => ({
-      ...prev,
-      images: (prev.images || []).filter(img => img.publicId !== publicId)
-    }));
+    setImagesMarkedForDeletion(prev => {
+      console.log('Previous images marked for deletion:', prev);
+      const newList = [...prev, publicId];
+      console.log('New images marked for deletion:', newList);
+      return newList;
+    });
+    setFormData(prev => {
+      console.log('Previous formData.images:', prev.images);
+      const filteredImages = (prev.images || []).filter(img => img.publicId !== publicId);
+      console.log('Filtered images:', filteredImages);
+      return {
+        ...prev,
+        images: filteredImages
+      };
+    });
   };
 
   const validateForm = (data: Partial<Product>) => {
@@ -820,7 +831,7 @@ const ProductsTab: React.FC<{
               <ImageUpload
                 ref={imageUploadRef}
                 onImagesUploaded={handleImagesUploaded}
-                existingImages={editingProduct?.images || []}
+                existingImages={formData.images || []}
                 onImageDelete={handleImageDelete}
                 onImageMarkForDeletion={handleImageMarkForDeletion}
                 maxImages={10}
