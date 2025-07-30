@@ -433,10 +433,17 @@ class ApiService {
       formData.append('images', file);
     });
 
+    // Prepare headers with authentication
+    const headers: Record<string, string> = {};
+    if (this.authToken) {
+      headers['Authorization'] = `Bearer ${this.authToken}`;
+    }
+
     const response = await fetch(`${this.baseUrl}/api/upload/images`, {
       method: 'POST',
       body: formData,
-      credentials: 'include',
+      headers,
+      credentials: this.authToken ? 'omit' : 'include',
     });
 
     if (!response.ok) {

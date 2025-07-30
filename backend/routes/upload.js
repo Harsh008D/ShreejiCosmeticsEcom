@@ -20,11 +20,17 @@ router.get('/test', (req, res) => {
 // @access  Private
 router.post('/images', protect, upload.array('images', 10), handleUploadError, async (req, res) => {
   try {
+    console.log('=== UPLOAD REQUEST DEBUG ===');
     console.log('Upload request received');
     console.log('User:', req.user);
+    console.log('User ID:', req.user?._id);
+    console.log('Is Admin:', req.user?.isAdmin);
     console.log('Files:', req.files);
     console.log('Body:', req.body);
     console.log('Headers:', req.headers);
+    console.log('Authorization Header:', req.headers.authorization);
+    console.log('Session:', req.session);
+    console.log('===========================');
     
     if (!req.files || req.files.length === 0) {
       console.log('No files uploaded');
