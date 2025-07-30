@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { Product } from '../types';
 import apiService from '../services/api';
 import { useAuth } from './AuthContext';
+import { useToast } from './ToastContext';
 
 interface WishlistContextType {
   wishlistItems: Product[];
@@ -22,6 +23,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const { showSuccess, showError } = useToast();
 
   const clearError = () => setError(null);
 
@@ -66,7 +68,9 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const addToWishlist = async (product: Product): Promise<{ success: boolean; error?: string }> => {
     if (!user) {
-      return { success: false, error: 'Please login to add items to wishlist' };
+      const errorMsg = 'Please login to add items to wishlist';
+      showError('Login Required', errorMsg);
+      return { success: false, error: errorMsg };
     }
     
     try {
@@ -75,6 +79,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
       const wishlistData = await apiService.addToWishlist(product.id || '');
       const mappedProducts = (wishlistData.products || []).map((p: { _id?: string; id?: string }) => ({ ...p, id: p._id || p.id }));
       setWishlistItems(mappedProducts);
+      showSuccess('Added to Wishlist', `${product.name} has been added to your wishlist`);
       return { success: true };
     } catch (error: unknown) {
       let errorMessage = 'Failed to add item to wishlist';
@@ -83,6 +88,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
         errorMessage = error.message || errorMessage;
       }
       setError(errorMessage);
+      showError('Add to Wishlist Failed', errorMessage);
       return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
@@ -91,7 +97,9 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const removeFromWishlist = async (productId: string): Promise<{ success: boolean; error?: string }> => {
     if (!user) {
-      return { success: false, error: 'Please login to manage wishlist' };
+      const errorMsg = 'Please login to manage wishlist';
+      showError('Login Required', errorMsg);
+      return { success: false, error: errorMsg };
     }
     
     try {
@@ -100,6 +108,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
       const wishlistData = await apiService.removeFromWishlist(productId);
       const mappedProducts = (wishlistData.products || []).map((p: { _id?: string; id?: string }) => ({ ...p, id: p._id || p.id }));
       setWishlistItems(mappedProducts);
+      showSuccess('Removed from Wishlist', 'Item has been removed from your wishlist');
       return { success: true };
     } catch (error: unknown) {
       let errorMessage = 'Failed to remove item from wishlist';
@@ -108,6 +117,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
         errorMessage = error.message || errorMessage;
       }
       setError(errorMessage);
+      showError('Remove from Wishlist Failed', errorMessage);
       return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
@@ -120,7 +130,9 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const clearWishlist = async (): Promise<{ success: boolean; error?: string }> => {
     if (!user) {
-      return { success: false, error: 'Please login to manage wishlist' };
+      const errorMsg = 'Please login to manage wishlist';
+      showError('Login Required', errorMsg);
+      return { success: false, error: errorMsg };
     }
     
     try {
@@ -128,6 +140,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
       setError(null);
       await apiService.clearWishlist();
       setWishlistItems([]);
+      showSuccess('Wishlist Cleared', 'Your wishlist has been cleared successfully');
       return { success: true };
     } catch (error: unknown) {
       let errorMessage = 'Failed to clear wishlist';
@@ -136,6 +149,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
         errorMessage = error.message || errorMessage;
       }
       setError(errorMessage);
+      showError('Clear Wishlist Failed', errorMessage);
       return { success: false, error: errorMessage };
     } finally {
       setLoading(false);

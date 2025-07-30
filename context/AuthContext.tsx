@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types';
 import apiService from '../services/api';
+import { useToast } from './ToastContext';
 
 interface AuthContextType {
   user: User | null;
@@ -23,6 +24,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { showSuccess, showError } = useToast();
 
   const clearError = () => setError(null);
 
@@ -49,6 +51,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setError(null);
       const userData = await apiService.login({ email, password });
       setUser(userData);
+      showSuccess('Login Successful', `Welcome back, ${userData.name}!`);
       return { success: true };
     } catch (error: unknown) {
       let errorMessage = 'Login failed. Please try again.';
@@ -58,6 +61,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         errorMessage = (error as { error: string }).error;
       }
       setError(errorMessage);
+      showError('Login Failed', errorMessage);
       return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
@@ -70,6 +74,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setError(null);
       const userData = await apiService.register({ name, email, password });
       setUser(userData);
+      showSuccess('Account Created', `Welcome to Shreeji Cosmetics, ${userData.name}!`);
       return { success: true };
     } catch (error: unknown) {
       let errorMessage = 'Signup failed. Please try again.';
@@ -79,6 +84,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         errorMessage = (error as { error: string }).error;
       }
       setError(errorMessage);
+      showError('Signup Failed', errorMessage);
       return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
@@ -91,8 +97,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setError(null);
       await apiService.logout();
       setUser(null);
+      showSuccess('Logged Out', 'You have been successfully logged out');
     } catch {
       setUser(null);
+      showSuccess('Logged Out', 'You have been successfully logged out');
     } finally {
       setLoading(false);
     }

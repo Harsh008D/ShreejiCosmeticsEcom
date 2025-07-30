@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { CartItem, Product } from '../types';
 import apiService from '../services/api';
 import { useAuth } from './AuthContext';
+import { useToast } from './ToastContext';
 
 interface CartContextType {
   cartItems: CartItem[];
@@ -24,6 +25,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const { showSuccess, showError } = useToast();
 
   const clearError = () => setError(null);
 
@@ -68,11 +70,15 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addToCart = async (product: Product, quantity: number = 1): Promise<{ success: boolean; error?: string }> => {
     if (!user) {
-      return { success: false, error: 'Please login to add items to cart' };
+      const errorMsg = 'Please login to add items to cart';
+      showError('Login Required', errorMsg);
+      return { success: false, error: errorMsg };
     }
     
     if (quantity <= 0) {
-      return { success: false, error: 'Quantity must be greater than 0' };
+      const errorMsg = 'Quantity must be greater than 0';
+      showError('Invalid Quantity', errorMsg);
+      return { success: false, error: errorMsg };
     }
     
     try {
@@ -81,6 +87,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const cartData = await apiService.addToCart(product.id || '', quantity);
       const mappedItems = (cartData.items || []).map((item: { product: { _id?: string; id?: string } }) => ({ ...item, product: { ...item.product, id: item.product._id || item.product.id } }));
       setCartItems(mappedItems);
+      showSuccess('Added to Cart', `${product.name} has been added to your cart`);
       return { success: true };
     } catch (error: unknown) {
       let errorMessage = 'Failed to add item to cart';
@@ -89,6 +96,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         errorMessage = error.message || errorMessage;
       }
       setError(errorMessage);
+      showError('Add to Cart Failed', errorMessage);
       return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
@@ -97,7 +105,9 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const removeFromCart = async (productId: string): Promise<{ success: boolean; error?: string }> => {
     if (!user) {
-      return { success: false, error: 'Please login to manage cart' };
+      const errorMsg = 'Please login to manage cart';
+      showError('Login Required', errorMsg);
+      return { success: false, error: errorMsg };
     }
     
     try {
@@ -106,6 +116,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const cartData = await apiService.removeFromCart(productId);
       const mappedItems = (cartData.items || []).map((item: { product: { _id?: string; id?: string } }) => ({ ...item, product: { ...item.product, id: item.product._id || item.product.id } }));
       setCartItems(mappedItems);
+      showSuccess('Removed from Cart', 'Item has been removed from your cart');
       return { success: true };
     } catch (error: unknown) {
       let errorMessage = 'Failed to remove item from cart';
@@ -114,6 +125,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         errorMessage = error.message || errorMessage;
       }
       setError(errorMessage);
+      showError('Remove from Cart Failed', errorMessage);
       return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
@@ -152,7 +164,9 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const clearCart = async (): Promise<{ success: boolean; error?: string }> => {
     if (!user) {
-      return { success: false, error: 'Please login to manage cart' };
+      const errorMsg = 'Please login to manage cart';
+      showError('Login Required', errorMsg);
+      return { success: false, error: errorMsg };
     }
     
     try {
@@ -160,6 +174,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setError(null);
       await apiService.clearCart();
       setCartItems([]);
+      showSuccess('Cart Cleared', 'Your cart has been cleared successfully');
       return { success: true };
     } catch (error: unknown) {
       let errorMessage = 'Failed to clear cart';
@@ -168,6 +183,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         errorMessage = error.message || errorMessage;
       }
       setError(errorMessage);
+      showError('Clear Cart Failed', errorMessage);
       return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
