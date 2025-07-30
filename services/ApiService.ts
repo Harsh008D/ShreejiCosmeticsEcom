@@ -29,10 +29,14 @@ function mapProductsArray(products: Record<string, unknown>[]): Product[] {
 
 class ApiService {
   private baseUrl: string;
+  private authToken: string | null = null;
 
   constructor() {
     // Use the Railway URL from environment variable
     this.baseUrl = import.meta.env.VITE_API_URL || 'https://shreejicosmeticsecom-production.up.railway.app';
+    
+    // Load token from localStorage on initialization
+    this.authToken = localStorage.getItem('authToken');
   }
 
   // Make HTTP request (with credentials for session-based auth)
@@ -41,11 +45,20 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
+    
+    // Prepare headers with JWT token if available
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+    
+    // Add JWT token if available (fallback for devices with cookie issues)
+    if (this.authToken) {
+      headers['Authorization'] = `Bearer ${this.authToken}`;
+    }
+    
     const config: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
       credentials: 'include', // Important for session/cookie auth
       ...options,
     };
@@ -75,23 +88,45 @@ class ApiService {
 
   // Authentication endpoints
   async login(credentials: LoginCredentials): Promise<User> {
-    return this.request<User>('/api/auth/login', {
+    const response = await this.request<User>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
+    
+    // Store JWT token if provided (fallback for devices with cookie issues)
+    if (response.token) {
+      this.authToken = response.token;
+      localStorage.setItem('authToken', response.token);
+    }
+    
+    return response;
   }
 
   async register(userData: Omit<RegisterData, 'confirmPassword'>): Promise<User> {
-    return this.request<User>('/api/auth/register', {
+    const response = await this.request<User>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
+    
+    // Store JWT token if provided (fallback for devices with cookie issues)
+    if (response.token) {
+      this.authToken = response.token;
+      localStorage.setItem('authToken', response.token);
+    }
+    
+    return response;
   }
 
   async logout(): Promise<ApiResponse> {
-    return this.request('/api/auth/logout', {
+    const response = await this.request('/api/auth/logout', {
       method: 'POST',
     });
+    
+    // Clear JWT token on logout
+    this.authToken = null;
+    localStorage.removeItem('authToken');
+    
+    return response;
   }
 
   async checkAuthStatus(): Promise<User> {

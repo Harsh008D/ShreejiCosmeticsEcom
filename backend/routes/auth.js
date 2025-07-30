@@ -3,6 +3,7 @@ import { body, validationResult } from 'express-validator';
 import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
 import { generateOTP, sendOTPEmail } from '../utils/emailService.js';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
@@ -46,11 +47,20 @@ router.post('/register', [
           resolve();
         });
       });
+
+      // Generate JWT token as fallback for devices with cookie issues
+      const token = jwt.sign(
+        { _id: user._id, email: user.email, isAdmin: user.isAdmin },
+        process.env.SESSION_SECRET || 'shreeji-session-secret',
+        { expiresIn: '7d' }
+      );
+
       res.status(201).json({
         _id: user._id,
         name: user.name,
         email: user.email,
-        isAdmin: user.isAdmin
+        isAdmin: user.isAdmin,
+        token: token // Include JWT token for devices with cookie issues
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
@@ -103,11 +113,20 @@ router.post('/login', [
         resolve();
       });
     });
+
+    // Generate JWT token as fallback for devices with cookie issues
+    const token = jwt.sign(
+      { _id: user._id, email: user.email, isAdmin: user.isAdmin },
+      process.env.SESSION_SECRET || 'shreeji-session-secret',
+      { expiresIn: '7d' }
+    );
+
     res.json({
       _id: user._id,
       name: user.name,
       email: user.email,
-      isAdmin: user.isAdmin
+      isAdmin: user.isAdmin,
+      token: token // Include JWT token for devices with cookie issues
     });
   } catch (error) {
     console.error('Login error:', error);
