@@ -82,15 +82,15 @@ if (NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
 
-// CORS configuration
+// CORS configuration - Allow all origins for better mobile compatibility
 const corsOptions = {
   origin: NODE_ENV === 'production' 
-    ? ['https://shreeji-cosmetics-ecom.vercel.app', 'https://shreeji-cosmetics-ecom-git-main-harsh008d.vercel.app']
+    ? true // Allow all origins in production for mobile compatibility
     : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:4173'],
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cookie', 'Set-Cookie'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cookie', 'Set-Cookie', 'Accept', 'Origin'],
   exposedHeaders: ['Set-Cookie']
 };
 
@@ -103,7 +103,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Cookie parser
 app.use(cookieParser());
 
-// Session middleware
+// Session middleware - Mobile optimized
 app.use(session({
   secret: process.env.SESSION_SECRET || 'shreeji-session-secret',
   resave: false,
@@ -113,7 +113,7 @@ app.use(session({
     secure: NODE_ENV === 'production',
     sameSite: NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-    domain: NODE_ENV === 'production' ? '.railway.app' : undefined
+    // Remove domain restriction for better mobile compatibility
   }
 }));
 

@@ -62,6 +62,11 @@ class ApiService {
       credentials: 'include', // Important for session/cookie auth
       ...options,
     };
+
+    // Add timeout for mobile connections
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    config.signal = controller.signal;
     
     try {
       const response = await fetch(url, config);
@@ -75,13 +80,25 @@ class ApiService {
       const data = await response.json();
       return data;
     } catch (error) {
+      // Clear timeout
+      clearTimeout(timeoutId);
+      
       // Handle fetch errors (network issues, CORS, etc.)
-      if (error instanceof TypeError && error.message.includes('fetch')) {
+      if (error instanceof TypeError || error.message?.includes('fetch') || error.message?.includes('Failed to fetch')) {
         throw { 
           message: 'Network connection failed. Please check your internet connection and try again.',
           error: 'NETWORK_ERROR'
         };
       }
+      
+      // Handle timeout errors
+      if (error.name === 'AbortError') {
+        throw { 
+          message: 'Request timed out. Please check your internet connection and try again.',
+          error: 'TIMEOUT_ERROR'
+        };
+      }
+      
       throw error;
     }
   }
