@@ -9,6 +9,7 @@ import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss-clean';
 import session from 'express-session';
+import MongoStore from 'connect-mongo';
 import cookieParser from 'cookie-parser';
 import csurf from 'csurf';
 
@@ -103,11 +104,17 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Cookie parser
 app.use(cookieParser());
 
-// Session middleware - Mobile-first approach
+// Session middleware - Mobile-first approach with MongoDB store
 app.use(session({
   secret: process.env.SESSION_SECRET || 'shreeji-session-secret',
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    collectionName: 'sessions',
+    ttl: 7 * 24 * 60 * 60, // 7 days
+    autoRemove: 'native'
+  }),
   cookie: {
     httpOnly: false, // Allow JavaScript access for mobile compatibility
     secure: NODE_ENV === 'production',
@@ -181,6 +188,16 @@ app.use((req, res, next) => {
     console.log(`${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms`);
   });
   next();
+});
+
+// Session error handling middleware
+app.use((err, req, res, next) => {
+  if (err.code === 'ECONNRESET' || err.code === 'ENOTFOUND') {
+    console.error('Session store connection error:', err);
+    // Continue without session for this request
+    return next();
+  }
+  next(err);
 });
 
 // Routes

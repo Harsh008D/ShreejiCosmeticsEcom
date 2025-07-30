@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 export const protect = async (req, res, next) => {
   try {
     // First try session-based auth
-    if (req.session.user) {
+    if (req.session && req.session.user) {
       req.user = req.session.user;
       return next();
     }
