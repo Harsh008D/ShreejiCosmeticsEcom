@@ -17,12 +17,14 @@ router.get('/test', (req, res) => {
 
 // @desc    Upload multiple images
 // @route   POST /api/upload/images
-// @access  Private/Admin
-router.post('/images', protect, admin, upload.array('images', 10), handleUploadError, async (req, res) => {
+// @access  Private
+router.post('/images', protect, upload.array('images', 10), handleUploadError, async (req, res) => {
   try {
     console.log('Upload request received');
+    console.log('User:', req.user);
     console.log('Files:', req.files);
     console.log('Body:', req.body);
+    console.log('Headers:', req.headers);
     
     if (!req.files || req.files.length === 0) {
       console.log('No files uploaded');
@@ -65,8 +67,8 @@ router.post('/images', protect, admin, upload.array('images', 10), handleUploadE
 
 // @desc    Delete image from Cloudinary
 // @route   DELETE /api/upload/images/*
-// @access  Private/Admin
-router.delete('/images/*', protect, admin, async (req, res) => {
+// @access  Private
+router.delete('/images/*', protect, async (req, res) => {
   try {
     const publicId = req.params[0]; // Get the full path from wildcard
     
@@ -103,8 +105,8 @@ router.delete('/images/*', protect, admin, async (req, res) => {
 
 // @desc    Set thumbnail image
 // @route   PUT /api/upload/thumbnail/:publicId
-// @access  Private/Admin
-router.put('/thumbnail/:publicId', protect, admin, async (req, res) => {
+// @access  Private
+router.put('/thumbnail/:publicId', protect, async (req, res) => {
   try {
     const { publicId } = req.params;
     const { productId } = req.body;
