@@ -82,16 +82,16 @@ if (NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
 
-// CORS configuration - Allow all origins for better mobile compatibility
+// CORS configuration - Mobile-first approach
 const corsOptions = {
-  origin: NODE_ENV === 'production' 
-    ? true // Allow all origins in production for mobile compatibility
-    : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:4173'],
+  origin: true, // Allow all origins for maximum mobile compatibility
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cookie', 'Set-Cookie', 'Accept', 'Origin'],
-  exposedHeaders: ['Set-Cookie']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cookie', 'Set-Cookie', 'Accept', 'Origin', 'User-Agent'],
+  exposedHeaders: ['Set-Cookie'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 };
 
 app.use(cors(corsOptions));
@@ -103,17 +103,16 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Cookie parser
 app.use(cookieParser());
 
-// Session middleware - Mobile optimized
+// Session middleware - Mobile-first approach
 app.use(session({
   secret: process.env.SESSION_SECRET || 'shreeji-session-secret',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    httpOnly: true,
+    httpOnly: false, // Allow JavaScript access for mobile compatibility
     secure: NODE_ENV === 'production',
-    sameSite: NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: 'lax', // Use lax for better mobile compatibility
     maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-    // Remove domain restriction for better mobile compatibility
   }
 }));
 

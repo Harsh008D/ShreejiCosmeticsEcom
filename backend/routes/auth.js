@@ -106,15 +106,20 @@ router.post('/login', [
     user.lastLogin = new Date();
     await user.save();
 
-    await new Promise((resolve, reject) => {
-      req.session.regenerate(err => {
-        if (err) return reject(err);
-        req.session.user = { _id: user._id, name: user.name, email: user.email, isAdmin: user.isAdmin };
-        resolve();
+    // Try session-based auth first
+    try {
+      await new Promise((resolve, reject) => {
+        req.session.regenerate(err => {
+          if (err) return reject(err);
+          req.session.user = { _id: user._id, name: user.name, email: user.email, isAdmin: user.isAdmin };
+          resolve();
+        });
       });
-    });
+    } catch (sessionError) {
+      console.log('Session creation failed, using JWT only:', sessionError.message);
+    }
 
-    // Generate JWT token as fallback for devices with cookie issues
+    // Generate JWT token (primary method for mobile)
     const token = jwt.sign(
       { _id: user._id, email: user.email, isAdmin: user.isAdmin },
       process.env.SESSION_SECRET || 'shreeji-session-secret',
@@ -126,7 +131,7 @@ router.post('/login', [
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
-      token: token // Include JWT token for devices with cookie issues
+      token: token // Primary authentication method
     });
   } catch (error) {
     console.error('Login error:', error);

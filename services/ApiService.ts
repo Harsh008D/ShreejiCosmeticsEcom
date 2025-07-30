@@ -30,6 +30,7 @@ function mapProductsArray(products: Record<string, unknown>[]): Product[] {
 class ApiService {
   private baseUrl: string;
   private authToken: string | null = null;
+  private isMobile: boolean;
 
   constructor() {
     // Use the Railway URL from environment variable
@@ -37,6 +38,9 @@ class ApiService {
     
     // Load token from localStorage on initialization
     this.authToken = localStorage.getItem('authToken');
+    
+    // Detect mobile device
+    this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   }
 
   // Make HTTP request (with credentials for session-based auth)
@@ -59,13 +63,14 @@ class ApiService {
     
     const config: RequestInit = {
       headers,
-      credentials: 'include', // Important for session/cookie auth
+      credentials: this.authToken ? 'omit' : 'include', // Use omit when JWT token is available
       ...options,
     };
 
-    // Add timeout for mobile connections
+    // Add timeout for mobile connections (longer timeout for mobile)
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutDuration = this.isMobile ? 15000 : 10000; // 15 seconds for mobile
+    const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
     config.signal = controller.signal;
     
     try {
@@ -85,8 +90,11 @@ class ApiService {
       
       // Handle fetch errors (network issues, CORS, etc.)
       if (error instanceof TypeError || error.message?.includes('fetch') || error.message?.includes('Failed to fetch')) {
+        const errorMessage = this.isMobile 
+          ? 'Mobile connection failed. Please check your internet connection and try again.'
+          : 'Network connection failed. Please check your internet connection and try again.';
         throw { 
-          message: 'Network connection failed. Please check your internet connection and try again.',
+          message: errorMessage,
           error: 'NETWORK_ERROR'
         };
       }
