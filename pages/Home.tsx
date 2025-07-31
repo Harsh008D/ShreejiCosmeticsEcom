@@ -73,7 +73,6 @@ const Home: React.FC = () => {
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-rose-50"></div>
-        <div className="absolute inset-0 bg-[url('https://sdmntpraustraliaeast.oaiusercontent.com/files/00000000-61ec-61fa-90d1-185433ed298a/raw?se=2025-06-25T20%3A06%3A07Z&sp=r&sv=2024-08-04&sr=b&scid=02e2ad52-e2c5-5e41-986c-cd92eb2a5860&skoid=5c72dd08-68ae-4091-b4e1-40ccec0693ae&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-06-25T14%3A26%3A59Z&ske=2025-06-26T14%3A26%3A59Z&sks=b&skv=2024-08-04&sig=49wm6qGg4hCCg7kMN%2Bz2sFIA2mD13LHIWsb4TR/2DQs%3D')] bg-cover bg-center opacity-50"></div>
         
         <div className="relative z-10 max-w-4xl mx-auto text-center px-6">
           <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6">
