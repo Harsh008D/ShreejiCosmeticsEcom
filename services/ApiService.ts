@@ -302,6 +302,12 @@ class ApiService {
     });
   }
 
+  async clearWishlist(): Promise<ApiResponse> {
+    return this.request('/api/wishlist', {
+      method: 'DELETE',
+    });
+  }
+
   // Review endpoints
   async getProductReviews(productId: string): Promise<Record<string, unknown>[]> {
     // Use the correct backend endpoint for fetching reviews

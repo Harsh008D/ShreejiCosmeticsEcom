@@ -319,7 +319,7 @@ const ProductsTab: React.FC<{
     numReviews: 0
   });
   const [imagesMarkedForDeletion, setImagesMarkedForDeletion] = useState<string[]>([]);
-  const [localImages, setLocalImages] = useState<any[]>([]);
+  const [localImages, setLocalImages] = useState<File[]>([]);
   const imageUploadRef = useRef<ImageUploadRef>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<{ category: string; inStock: boolean | undefined }>({ category: '', inStock: undefined });
@@ -418,7 +418,7 @@ const ProductsTab: React.FC<{
     }));
   };
 
-  const handleLocalImagesSelected = (images: any[]) => {
+  const handleLocalImagesSelected = (images: File[]) => {
     setLocalImages(images);
   };
 

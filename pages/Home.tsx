@@ -71,8 +71,20 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-rose-50"></div>
+      <section
+        className="relative h-screen flex items-center justify-center overflow-hidden"
+        style={{
+          backgroundImage: "url('/HomeBackImage2.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0) 0%, rgba(255, 255, 255, 0) 50%, rgba(244, 63, 93, 0) 100%)',
+          }}
+        ></div>
         
         <div className="relative z-10 max-w-4xl mx-auto text-center px-6">
           <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6">
