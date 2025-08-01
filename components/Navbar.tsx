@@ -37,14 +37,12 @@ const Navbar: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    let interval: number | null;
+    let interval: NodeJS.Timeout | null;
     const fetchPendingOrderCount = async () => {
       if (user?.isAdmin) {
         try {
           const orders = await apiService.getAllOrders();
-          const pending = orders.filter((order: Record<string, unknown>) => 
-            typeof order.status === 'string' && order.status === 'pending'
-          ).length;
+          const pending = orders.filter((order: { status: string }) => order.status === 'pending').length;
           setPendingOrderCount(pending);
         } catch {
           setPendingOrderCount(0);
@@ -53,13 +51,9 @@ const Navbar: React.FC = () => {
     };
     if (user?.isAdmin) {
       fetchPendingOrderCount();
-      interval = window.setInterval(fetchPendingOrderCount, 5000);
+      interval = setInterval(fetchPendingOrderCount, 5000);
     }
-    return () => {
-      if (interval) {
-        window.clearInterval(interval);
-      }
-    };
+    return () => interval && clearInterval(interval!);
   }, [user?.isAdmin]);
 
   const navLinks = [
@@ -77,14 +71,8 @@ const Navbar: React.FC = () => {
 
   return (
     <nav className={`fixed top-4 left-4 right-4 z-50 transition-all duration-300 ${
-      location.pathname === '/'
-        ? (isScrolled
-            ? 'bg-white shadow-lg backdrop-blur-lg'
-            : 'bg-white/30 backdrop-blur-lg')
-        : (isScrolled
-            ? 'bg-white shadow-lg backdrop-blur-lg'
-            : 'bg-white/90 backdrop-blur-lg')
-    } rounded-2xl`}>
+      isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-white/90 backdrop-blur-sm'
+    } rounded-2xl border border-emerald-100`}>
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -92,10 +80,7 @@ const Navbar: React.FC = () => {
             <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center">
               <Leaf className="w-6 h-6 text-white" />
             </div>
-            <span className="flex flex-col leading-tight">
-              <span className="text-xl font-bold text-emerald-700">Shreeji</span>
-              <span className="text-sm font-medium text-gray-600 -mt-0.5">Cosmetics</span>
-            </span>
+            <span className="text-xl font-bold text-emerald-700">Shreeji</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -106,7 +91,7 @@ const Navbar: React.FC = () => {
                 to={link.to}
                 className={`font-medium px-4 py-2 rounded-full transition-colors duration-200 ${
                   location.pathname === link.to
-                    ? 'text-white font-bold bg-emerald-500'
+                    ? 'text-emerald-600 font-bold bg-emerald-100'
                     : 'text-gray-700 hover:text-emerald-800'
                 }`}
               >
@@ -269,9 +254,7 @@ const Navbar: React.FC = () => {
                   to={link.to}
                   onClick={() => setIsMenuOpen(false)}
                   className={`text-gray-700 hover:text-emerald-600 transition-all duration-300 font-medium px-2 py-1 rounded-lg ${
-                    location.pathname === link.to
-                      ? 'text-white font-bold bg-emerald-500 shadow-sm scale-105'
-                      : ''
+                    location.pathname === link.to ? 'text-emerald-800 font-bold underline underline-offset-8 decoration-2 decoration-emerald-700 bg-emerald-100 shadow-sm scale-105' : ''
                   }`}
                 >
                   {link.label}

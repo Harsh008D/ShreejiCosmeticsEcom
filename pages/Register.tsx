@@ -50,7 +50,7 @@ const Register = () => {
       } else {
         showError(result.error || 'Registration failed');
       }
-    } catch {
+    } catch (error) {
       showError('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);

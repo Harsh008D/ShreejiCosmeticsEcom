@@ -68,7 +68,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user, loadCart]);
 
-  const addToCart = async (product: Product, quantity: number = 1, suppressToast = false): Promise<{ success: boolean; error?: string }> => {
+  const addToCart = async (product: Product, quantity: number = 1): Promise<{ success: boolean; error?: string }> => {
     if (!user) {
       const errorMsg = 'Please login to add items to cart';
       showError('Login Required', errorMsg);
@@ -87,9 +87,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const cartData = await apiService.addToCart(product.id || '', quantity);
       const mappedItems = (cartData.items || []).map((item: { product: { _id?: string; id?: string } }) => ({ ...item, product: { ...item.product, id: item.product._id || item.product.id } }));
       setCartItems(mappedItems);
-      if (!suppressToast) {
-        showSuccess('Added to Cart', `${product.name} has been added to your cart`);
-      }
+      showSuccess('Added to Cart', `${product.name} has been added to your cart`);
       return { success: true };
     } catch (error: unknown) {
       let errorMessage = 'Failed to add item to cart';
@@ -105,7 +103,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const removeFromCart = async (productId: string, suppressToast = false): Promise<{ success: boolean; error?: string }> => {
+  const removeFromCart = async (productId: string): Promise<{ success: boolean; error?: string }> => {
     if (!user) {
       const errorMsg = 'Please login to manage cart';
       showError('Login Required', errorMsg);
@@ -118,9 +116,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const cartData = await apiService.removeFromCart(productId);
       const mappedItems = (cartData.items || []).map((item: { product: { _id?: string; id?: string } }) => ({ ...item, product: { ...item.product, id: item.product._id || item.product.id } }));
       setCartItems(mappedItems);
-      if (!suppressToast) {
-        showSuccess('Removed from Cart', 'Item has been removed from your cart');
-      }
+      showSuccess('Removed from Cart', 'Item has been removed from your cart');
       return { success: true };
     } catch (error: unknown) {
       let errorMessage = 'Failed to remove item from cart';

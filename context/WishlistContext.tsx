@@ -95,7 +95,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
-  const removeFromWishlist = async (productId: string, suppressToast = false): Promise<{ success: boolean; error?: string }> => {
+  const removeFromWishlist = async (productId: string): Promise<{ success: boolean; error?: string }> => {
     if (!user) {
       const errorMsg = 'Please login to manage wishlist';
       showError('Login Required', errorMsg);
@@ -108,9 +108,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
       const wishlistData = await apiService.removeFromWishlist(productId);
       const mappedProducts = (wishlistData.products || []).map((p: { _id?: string; id?: string }) => ({ ...p, id: p._id || p.id }));
       setWishlistItems(mappedProducts);
-      if (!suppressToast) {
-        showSuccess('Removed from Wishlist', 'Item has been removed from your wishlist');
-      }
+      showSuccess('Removed from Wishlist', 'Item has been removed from your wishlist');
       return { success: true };
     } catch (error: unknown) {
       let errorMessage = 'Failed to remove item from wishlist';

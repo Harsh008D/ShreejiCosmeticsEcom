@@ -18,7 +18,7 @@ const Wishlist: React.FC = () => {
     if (!pid) return;
     setLoadingId(pid);
     await addToCart(product, 1);
-    await removeFromWishlist(pid, true); // suppress toast for remove
+    await removeFromWishlist(pid);
     setLoadingId(null);
   };
 
@@ -26,7 +26,7 @@ const Wishlist: React.FC = () => {
     const pid = product.id;
     if (!pid) return;
     setLoadingId(pid);
-    await removeFromWishlist(pid); // show toast for direct remove
+    await removeFromWishlist(pid);
     setLoadingId(null);
   };
 
@@ -66,14 +66,7 @@ const Wishlist: React.FC = () => {
           
           {mappedWishlistItems.length > 0 && (
             <button
-              onClick={async () => {
-                await clearWishlist();
-                // Ensure UI updates after clearing
-                if (typeof window !== 'undefined' && window.location) {
-                  // Optionally, force a refresh if needed
-                  // window.location.reload();
-                }
-              }}
+              onClick={clearWishlist}
               className="text-red-500 hover:text-red-700 font-medium transition-colors duration-200"
             >
               Clear All
