@@ -34,40 +34,13 @@ class ApiService {
 
   constructor() {
     // Use the Railway URL from environment variable
-    this.baseUrl = (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL || 'https://shreejicosmeticsecom-production.up.railway.app';
+    this.baseUrl = import.meta.env.VITE_API_URL || 'https://shreejicosmeticsecom-production.up.railway.app';
     
     // Load token from localStorage on initialization
     this.authToken = localStorage.getItem('authToken');
     
     // Detect mobile device
     this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-    // Check network connectivity
-    this.checkNetworkConnectivity();
-  }
-
-  // Check network connectivity and log issues
-  private checkNetworkConnectivity(): void {
-    if ('connection' in navigator) {
-      const connection = (navigator as Navigator & { connection?: { effectiveType?: string; downlink?: number; rtt?: number; saveData?: boolean } }).connection;
-      if (connection) {
-        console.log('Network Info:', {
-          effectiveType: connection.effectiveType,
-          downlink: connection.downlink,
-          rtt: connection.rtt,
-          saveData: connection.saveData
-        });
-      }
-    }
-    
-    // Listen for online/offline events
-    window.addEventListener('online', () => {
-      console.log('Network: Online');
-    });
-    
-    window.addEventListener('offline', () => {
-      console.log('Network: Offline');
-    });
   }
 
   // Make HTTP request (with credentials for session-based auth)
@@ -80,12 +53,8 @@ class ApiService {
     // Prepare headers with JWT token if available
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      ...options.headers,
     };
-    
-    // Add custom headers from options
-    if (options.headers) {
-      Object.assign(headers, options.headers);
-    }
     
     // Add JWT token if available (fallback for devices with cookie issues)
     if (this.authToken) {
@@ -100,100 +69,77 @@ class ApiService {
 
     // Add timeout for mobile connections (longer timeout for mobile)
     const controller = new AbortController();
-    const timeoutDuration = this.isMobile ? 20000 : 15000; // 20 seconds for mobile
+    const timeoutDuration = this.isMobile ? 15000 : 10000; // 15 seconds for mobile
     const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
     config.signal = controller.signal;
     
-    // Retry logic for mobile connections
-    const maxRetries = this.isMobile ? 3 : 1;
-    let lastError: unknown;
-    
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        const response = await fetch(url, config);
-        
-        // Handle network errors
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({ message: 'Network error' }));
-          throw data;
-        }
-        
-        const data = await response.json();
-        return data;
-      } catch (error) {
-        // Clear timeout
-        clearTimeout(timeoutId);
-        lastError = error;
-        
-        // Handle fetch errors (network issues, CORS, etc.)
-        if (error instanceof TypeError || (error as Error).message?.includes('fetch') || (error as Error).message?.includes('Failed to fetch')) {
-          if (attempt < maxRetries) {
-            // Wait before retry (exponential backoff)
-            await new Promise(resolve => setTimeout(resolve, attempt * 1000));
-            continue;
-          }
-          
-          const errorMessage = this.isMobile 
-            ? 'Mobile connection failed. Please check your internet connection and try again.'
-            : 'Network connection failed. Please check your internet connection and try again.';
-          throw { 
-            message: errorMessage,
-            error: 'NETWORK_ERROR'
-          };
-        }
-        
-        // Handle timeout errors
-        if ((error as Error).name === 'AbortError') {
-          if (attempt < maxRetries) {
-            // Wait before retry
-            await new Promise(resolve => setTimeout(resolve, attempt * 1000));
-            continue;
-          }
-          
-          throw { 
-            message: 'Request timed out. Please check your internet connection and try again.',
-            error: 'TIMEOUT_ERROR'
-          };
-        }
-        
-        // For other errors, don't retry
-        throw error;
+    try {
+      const response = await fetch(url, config);
+      
+      // Handle network errors
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({ message: 'Network error' }));
+        throw data;
       }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      // Clear timeout
+      clearTimeout(timeoutId);
+      
+      // Handle fetch errors (network issues, CORS, etc.)
+      if (error instanceof TypeError || error.message?.includes('fetch') || error.message?.includes('Failed to fetch')) {
+        const errorMessage = this.isMobile 
+          ? 'Mobile connection failed. Please check your internet connection and try again.'
+          : 'Network connection failed. Please check your internet connection and try again.';
+        throw { 
+          message: errorMessage,
+          error: 'NETWORK_ERROR'
+        };
+      }
+      
+      // Handle timeout errors
+      if (error.name === 'AbortError') {
+        throw { 
+          message: 'Request timed out. Please check your internet connection and try again.',
+          error: 'TIMEOUT_ERROR'
+        };
+      }
+      
+      throw error;
     }
-    
-    // If we get here, all retries failed
-    throw lastError;
   }
 
   // Authentication endpoints
   async login(credentials: LoginCredentials): Promise<User> {
-    const response = await this.request<{ user: User; token?: string }>('/auth/login', {
+    const response = await this.request<User>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
     
-    // Store token if provided
+    // Store JWT token if provided (fallback for devices with cookie issues)
     if (response.token) {
       this.authToken = response.token;
       localStorage.setItem('authToken', response.token);
     }
     
-    return response.user;
+    return response;
   }
 
   async register(userData: Omit<RegisterData, 'confirmPassword'>): Promise<User> {
-    const response = await this.request<{ user: User; token?: string }>('/auth/register', {
+    const response = await this.request<User>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
     
-    // Store token if provided
+    // Store JWT token if provided (fallback for devices with cookie issues)
     if (response.token) {
       this.authToken = response.token;
       localStorage.setItem('authToken', response.token);
     }
     
-    return response.user;
+    return response;
   }
 
   async logout(): Promise<ApiResponse> {
@@ -352,6 +298,12 @@ class ApiService {
 
   async removeFromWishlist(productId: string): Promise<ApiResponse> {
     return this.request(`/api/wishlist/${productId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async clearWishlist(): Promise<ApiResponse> {
+    return this.request('/api/wishlist', {
       method: 'DELETE',
     });
   }

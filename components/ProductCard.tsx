@@ -22,7 +22,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: originalProduct }) =
   
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-  const { showSuccess, showError, showInfo } = useToast();
+  const {showError, showInfo } = useToast();
   const { user, isAdmin } = useAuth();
 
   const handleAddToCart = async (e: React.MouseEvent) => {
@@ -45,12 +45,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: originalProduct }) =
 
     setIsAddingToCart(true);
     try {
-      const result = await addToCart(product, 1);
-      if (result.success) {
-        showSuccess('Added to Cart', `${product.name} has been added to your cart`);
-      } else {
-        showError('Failed to Add', result.error || 'Failed to add item to cart');
-      }
+      await addToCart(product, 1);
+      // Toast is handled by the context
     } catch (error: unknown) {
       if (error instanceof Error) {
         showError('Error', error.message || 'Failed to add item to cart');
@@ -77,21 +73,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: originalProduct }) =
 
     setIsTogglingWishlist(true);
     try {
-      const productId = product.id;
+      const productId = product.id || '';
       if (isInWishlist(productId)) {
-        const result = await removeFromWishlist(productId);
-        if (result.success) {
-          showSuccess('Removed from Wishlist', `${product.name} has been removed from your wishlist`);
-        } else {
-          showError('Failed to Remove', result.error || 'Failed to remove item from wishlist');
-        }
+        await removeFromWishlist(productId);
+        // Toast is handled by the context
       } else {
-        const result = await addToWishlist(product);
-        if (result.success) {
-          showSuccess('Added to Wishlist', `${product.name} has been added to your wishlist`);
-        } else {
-          showError('Failed to Add', result.error || 'Failed to add item to wishlist');
-        }
+        await addToWishlist(product);
+        // Toast is handled by the context
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -104,7 +92,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product: originalProduct }) =
     }
   };
 
-  const productId = product.id;
+  const productId = product.id || '';
 
   return (
     <Link to={`/product/${productId}`} className="group">

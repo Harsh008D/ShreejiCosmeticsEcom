@@ -57,12 +57,12 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
     
     const files = Array.from(e.dataTransfer.files);
     handleFiles(files);
-  }, []);
+  }, [handleFiles]);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     handleFiles(files);
-  }, []);
+  }, [handleFiles]);
 
   const handleFiles = useCallback(async (files: File[]) => {
     if (disabled) return;

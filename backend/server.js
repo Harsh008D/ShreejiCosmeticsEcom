@@ -85,32 +85,14 @@ if (NODE_ENV === 'production') {
 
 // CORS configuration - Mobile-first approach
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or Postman)
-    if (!origin) return callback(null, true);
-    
-    // Allow all origins for maximum mobile compatibility
-    callback(null, true);
-  },
+  origin: true, // Allow all origins for maximum mobile compatibility
   credentials: true,
   optionsSuccessStatus: 200,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With', 
-    'Cookie', 
-    'Set-Cookie', 
-    'Accept', 
-    'Origin', 
-    'User-Agent',
-    'Access-Control-Allow-Origin',
-    'Access-Control-Allow-Credentials'
-  ],
-  exposedHeaders: ['Set-Cookie', 'Set-Cookie'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cookie', 'Set-Cookie', 'Accept', 'Origin', 'User-Agent'],
+  exposedHeaders: ['Set-Cookie'],
   preflightContinue: false,
-  optionsSuccessStatus: 204,
-  maxAge: 86400 // Cache preflight for 24 hours
+  optionsSuccessStatus: 204
 };
 
 app.use(cors(corsOptions));
