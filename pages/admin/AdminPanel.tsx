@@ -9,6 +9,12 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 import AdminOrders from './AdminOrders';
 import ImageUpload, { ImageUploadRef } from '../../components/ImageUpload';
 
+interface LocalImage {
+  file: File;
+  preview: string;
+  id: string;
+}
+
 const AdminPanel: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -48,8 +54,8 @@ const AdminPanel: React.FC = () => {
 
   const loadBrandInfo = useCallback(async () => {
     try {
-      const data = await apiService.getBrandInfo() as BrandInfo;
-      setBrandInfo(data);
+      const data = await apiService.getBrandInfo();
+      setBrandInfo(data as unknown as BrandInfo);
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error('Failed to load brand info:', error);
@@ -62,7 +68,9 @@ const AdminPanel: React.FC = () => {
   const fetchPendingOrderCount = useCallback(async () => {
     try {
       const orders = await apiService.getAllOrders();
-      const pending = orders.filter((order: { status: string }) => order.status === 'pending').length;
+      const pending = orders.filter((order: Record<string, unknown>) => 
+        (order.status as string) === 'pending'
+      ).length;
       setPendingOrderCount(pending);
     } catch {
       setPendingOrderCount(0);
@@ -87,8 +95,8 @@ const AdminPanel: React.FC = () => {
       
       // Show detailed success message with cleanup info
       if (response.cleanup) {
-        const cleanupInfo = response.cleanup;
-        const message = `Product deleted successfully!\n\nCleanup completed:\n• ${cleanupInfo.imagesDeleted} images removed from Cloudinary\n• All reviews deleted\n• Removed from ${cleanupInfo.cartsUpdated} carts\n• Removed from ${cleanupInfo.wishlistsUpdated} wishlists\n• Updated ${cleanupInfo.ordersUpdated} orders`;
+        const cleanupInfo = response.cleanup as Record<string, unknown>;
+        const message = `Product deleted successfully!\n\nCleanup completed:\n• ${cleanupInfo.imagesDeleted || 0} images removed from Cloudinary\n• All reviews deleted\n• Removed from ${cleanupInfo.cartsUpdated || 0} carts\n• Removed from ${cleanupInfo.wishlistsUpdated || 0} wishlists\n• Updated ${cleanupInfo.ordersUpdated || 0} orders`;
         showSuccess('Product Deleted', message);
       } else {
         showSuccess('Product Deleted', 'Product has been successfully deleted');
@@ -111,7 +119,7 @@ const AdminPanel: React.FC = () => {
 
   const saveBrandInfo = async (updatedBrandInfo: BrandInfo) => {
     try {
-      await apiService.updateBrandInfo(updatedBrandInfo);
+      await apiService.updateBrandInfo(updatedBrandInfo as unknown as Record<string, unknown>);
       setBrandInfo(updatedBrandInfo);
       showSuccess('Brand Info Updated', 'Brand information has been successfully updated');
     } catch (error: unknown) {
@@ -163,42 +171,22 @@ const AdminPanel: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-col md:flex-row items-center md:space-x-2 px-4 md:px-6 py-3 md:py-4 transition-colors duration-200 focus:outline-none relative ${
+                className={`flex flex-col md:flex-row items-center md:space-x-2 px-4 md:px-6 py-3 md:py-4 transition-colors duration-200 focus:outline-none relative min-w-0 ${
                   activeTab === tab.id
                     ? 'text-emerald-600 border-b-2 border-emerald-500'
                     : 'text-gray-600 hover:text-emerald-600'
                 }`}
-                style={{ minWidth: 0 }}
               >
                 {tab.icon}
-                <span className="hidden md:inline ml-0 md:ml-2" style={{ position: 'relative' }}>
+                <span className="hidden md:inline ml-0 md:ml-2 relative">
                   {tab.label}
                   {tab.id === 'orders' && pendingOrderCount > 0 && (
-                    <span style={{
-                      display: 'inline-block',
-                      position: 'absolute',
-                      top: '-6px',
-                      right: '-16px',
-                      width: '10px',
-                      height: '10px',
-                      background: '#ef4444',
-                      borderRadius: '50%',
-                      border: '2px solid white',
-                    }} />
+                    <span className="inline-block absolute -top-1.5 -right-4 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
                   )}
                 </span>
                 {/* Red dot for orders icon on mobile */}
                 {tab.id === 'orders' && pendingOrderCount > 0 && (
-                  <span className="md:hidden" style={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 16,
-                    width: '10px',
-                    height: '10px',
-                    background: '#ef4444',
-                    borderRadius: '50%',
-                    border: '2px solid white',
-                  }} />
+                  <span className="md:hidden absolute top-2 right-4 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
                 )}
               </button>
             ))}
@@ -302,9 +290,9 @@ const ProductsTab: React.FC<{
     }
     return product.image || 'https://via.placeholder.com/400x400?text=No+Image';
   };
-  const [formData, setFormData] = useState<Partial<Product>>({
+  const [formData, setFormData] = useState<Partial<Product> & { ingredientsRaw?: string }>({
     name: '',
-    price: '',
+    price: 0,
     image: '',
     images: [],
     description: '',
@@ -319,7 +307,7 @@ const ProductsTab: React.FC<{
     numReviews: 0
   });
   const [imagesMarkedForDeletion, setImagesMarkedForDeletion] = useState<string[]>([]);
-  const [localImages, setLocalImages] = useState<File[]>([]);
+  const [localImages, setLocalImages] = useState<LocalImage[]>([]);
   const imageUploadRef = useRef<ImageUploadRef>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<{ category: string; inStock: boolean | undefined }>({ category: '', inStock: undefined });
@@ -418,7 +406,7 @@ const ProductsTab: React.FC<{
     }));
   };
 
-  const handleLocalImagesSelected = (images: File[]) => {
+  const handleLocalImagesSelected = (images: LocalImage[]) => {
     setLocalImages(images);
   };
 
@@ -431,18 +419,13 @@ const ProductsTab: React.FC<{
   };
 
   const handleImageMarkForDeletion = (publicId: string) => {
-    console.log('handleImageMarkForDeletion called with publicId:', publicId);
     // For existing images in edit mode (mark for deletion)
     setImagesMarkedForDeletion(prev => {
-      console.log('Previous images marked for deletion:', prev);
       const newList = [...prev, publicId];
-      console.log('New images marked for deletion:', newList);
       return newList;
     });
     setFormData(prev => {
-      console.log('Previous formData.images:', prev.images);
       const filteredImages = (prev.images || []).filter(img => img.publicId !== publicId);
-      console.log('Filtered images:', filteredImages);
       return {
         ...prev,
         images: filteredImages
@@ -503,21 +486,14 @@ const ProductsTab: React.FC<{
     }
     if (confirmDialog.action === 'add' || confirmDialog.action === 'update') {
       try {
-        console.log('Starting product save process...');
-        console.log('Local images count:', localImages.length);
-        console.log('Images marked for deletion:', imagesMarkedForDeletion);
-        console.log('Image upload ref:', imageUploadRef.current);
-        
         // For edit mode: Delete marked images from Cloudinary first
         if (confirmDialog.action === 'update' && imagesMarkedForDeletion.length > 0) {
-          console.log('Deleting marked images from Cloudinary...');
           for (const publicId of imagesMarkedForDeletion) {
             try {
               const { apiService } = await import('../../services/ApiService');
               await apiService.deleteImage(publicId);
-              console.log('Successfully deleted image from Cloudinary:', publicId);
-            } catch (error) {
-              console.error('Failed to delete image from Cloudinary:', publicId, error);
+            } catch {
+              console.error('Failed to delete image from Cloudinary:', publicId);
               // Continue with other operations even if one deletion fails
             }
           }
@@ -526,17 +502,13 @@ const ProductsTab: React.FC<{
         // Upload local images first if any
         let uploadedImages: ProductImage[] = [];
         if (localImages.length > 0 && imageUploadRef.current) {
-          console.log('Uploading local images to Cloudinary...');
           try {
             uploadedImages = await imageUploadRef.current.uploadLocalImages();
-            console.log('Successfully uploaded images:', uploadedImages);
-          } catch (error) {
-            console.error('Failed to upload images:', error);
+          } catch {
+            console.error('Failed to upload images');
             showError('Upload Failed', 'Failed to upload images. Please try again.');
             return;
           }
-        } else {
-          console.log('No local images to upload or ref not available');
         }
 
         // Normalize images to always be array of objects
@@ -556,7 +528,6 @@ const ProductsTab: React.FC<{
 
         // Combine existing images with newly uploaded ones
         const allImages = [...normalizedImages, ...uploadedImages];
-        console.log('All images for product:', allImages);
 
         // Prepare payload, only include fields that are provided
         const payload: Partial<Product> = {
@@ -583,19 +554,12 @@ const ProductsTab: React.FC<{
         // Always include images array if we have any images
         if (allImages.length > 0) {
           payload.images = allImages;
-          console.log('Including images in payload:', payload.images);
-        } else {
-          console.log('No images to include in payload');
         }
 
-        console.log('Final payload:', payload);
-
         if (confirmDialog.action === 'add') {
-          console.log('Creating product with payload:', JSON.stringify(payload, null, 2));
           await apiService.createProduct(payload);
           showSuccess('Product Added', 'Product has been successfully created');
         } else if (confirmDialog.action === 'update' && editingProduct) {
-          console.log('Updating product with payload:', JSON.stringify(payload, null, 2));
           await apiService.updateProduct(editingProduct.id!, payload);
           showSuccess('Product Updated', 'Product has been successfully updated');
         }
@@ -603,7 +567,7 @@ const ProductsTab: React.FC<{
         // Reset form
         setFormData({
           name: '',
-          price: '',
+          price: 0,
           image: '',
           images: [],
           description: '',
@@ -675,6 +639,7 @@ const ProductsTab: React.FC<{
             value={sort}
             onChange={e => setSort(e.target.value)}
             className="border border-gray-200 rounded-lg px-4 py-2 bg-white text-base text-gray-700 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
+            title="Sort products"
           >
             <option value="all">Sort By</option>
             <option value="featured">Featured</option>
@@ -698,6 +663,7 @@ const ProductsTab: React.FC<{
                     value={filters.category}
                     onChange={e => setFilters(f => ({ ...f, category: e.target.value }))}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 text-lg"
+                    title="Filter by category"
                   >
                     <option value="">All Categories</option>
                     <option value="Face Care">Face Care</option>
@@ -713,6 +679,7 @@ const ProductsTab: React.FC<{
                     value={filters.inStock === undefined ? '' : filters.inStock ? 'in' : 'out'}
                     onChange={e => setFilters(f => ({ ...f, inStock: e.target.value === '' ? undefined : e.target.value === 'in' }))}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 text-lg"
+                    title="Filter by availability"
                   >
                     <option value="">All</option>
                     <option value="in">In Stock</option>
@@ -758,7 +725,7 @@ const ProductsTab: React.FC<{
             setEditingProduct(null);
             setFormData({
               name: '',
-              price: '',
+              price: 0,
               image: '',
               description: '',
               ingredients: [],
@@ -806,10 +773,14 @@ const ProductsTab: React.FC<{
               <input
                 type="text"
                 name="name"
+                id="name"
                 required
                 value={formData.name}
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="Enter product name"
+                title="Product name"
+                aria-label="Product name"
               />
             </div>
 
@@ -818,11 +789,15 @@ const ProductsTab: React.FC<{
               <input
                 type="number"
                 name="price"
+                id="price"
                 required
                 value={formData.price}
                 onChange={handleInputChange}
                 onWheel={e => e.currentTarget.blur()}
                 className="w-full px-4 py-3 border border-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="Enter price"
+                title="Product price"
+                aria-label="Product price"
               />
             </div>
 
@@ -845,10 +820,13 @@ const ProductsTab: React.FC<{
               <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
               <select
                 name="category"
+                id="category"
                 required
                 value={formData.category}
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                title="Product category"
+                aria-label="Product category"
               >
                 <option value="">Select Category</option>
                 <option value="Face Care">Face Care</option>
@@ -863,11 +841,15 @@ const ProductsTab: React.FC<{
               <input
                 type="number"
                 name="stockQuantity"
+                id="stockQuantity"
                 min={0}
                 value={formData.stockQuantity ?? 0}
                 onChange={handleInputChange}
                 onWheel={e => e.currentTarget.blur()}
                 className="w-full px-4 py-3 border border-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="Enter stock quantity"
+                title="Stock quantity"
+                aria-label="Stock quantity"
               />
             </div>
 
@@ -875,11 +857,15 @@ const ProductsTab: React.FC<{
               <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
               <textarea
                 name="description"
+                id="description"
                 required
                 rows={3}
                 value={formData.description}
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="Enter product description"
+                title="Product description"
+                aria-label="Product description"
               />
             </div>
 
@@ -887,11 +873,14 @@ const ProductsTab: React.FC<{
               <label className="block text-sm font-medium text-gray-700 mb-2">Ingredients (one per line)</label>
               <textarea
                 name="ingredients"
+                id="ingredients"
                 rows={4}
                 value={formData.ingredientsRaw || (formData.ingredients ?? []).join('\n')}
                 onChange={handleIngredientsChange}
                 placeholder="Enter ingredients, one per line&#10;Example:&#10;Aloe Vera&#10;Coconut Oil&#10;Vitamin E"
                 className="w-full px-4 py-3 border border-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-y"
+                title="Product ingredients"
+                aria-label="Product ingredients"
               />
             </div>
 
@@ -899,11 +888,15 @@ const ProductsTab: React.FC<{
               <label className="block text-sm font-medium text-gray-700 mb-2">Usage Instructions</label>
               <textarea
                 name="usage"
+                id="usage"
                 required
                 rows={3}
                 value={formData.usage}
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="Enter usage instructions"
+                title="Usage instructions"
+                aria-label="Usage instructions"
               />
             </div>
 
@@ -946,7 +939,7 @@ const ProductsTab: React.FC<{
                   // Reset form data
                   setFormData({
                     name: '', 
-                    price: '', 
+                    price: 0, 
                     image: '', 
                     images: [], 
                     description: '', 
@@ -999,8 +992,8 @@ const ProductsTab: React.FC<{
             <div className="flex justify-between items-center">
               <span className={`px-3 py-1 rounded-full text-xs font-medium ${product.inStock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{product.inStock ? 'In Stock' : 'Out of Stock'}</span>
               <div className="flex space-x-2">
-                <button onClick={() => setEditingProduct(product)} className="p-2 text-blue-600 hover:text-blue-800 transition-colors duration-200"><Edit className="w-4 h-4" /></button>
-                <button onClick={() => handleDelete(product._id || product.id || '')} className="p-2 text-red-600 hover:text-red-800 transition-colors duration-200"><Trash2 className="w-4 h-4" /></button>
+                <button onClick={() => setEditingProduct(product)} className="p-2 text-blue-600 hover:text-blue-800 transition-colors duration-200" title="Edit product" aria-label="Edit product"><Edit className="w-4 h-4" /></button>
+                <button onClick={() => handleDelete(product._id || product.id || '')} className="p-2 text-red-600 hover:text-red-800 transition-colors duration-200" title="Delete product" aria-label="Delete product"><Trash2 className="w-4 h-4" /></button>
               </div>
             </div>
           </div>
@@ -1060,12 +1053,16 @@ const ProductsTab: React.FC<{
                       <button
                         onClick={() => setEditingProduct(product)}
                         className="p-2 text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                        title="Edit product"
+                        aria-label="Edit product"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(product._id || product.id || '')}
                         className="p-2 text-red-600 hover:text-red-800 transition-colors duration-200"
+                        title="Delete product"
+                        aria-label="Delete product"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -1191,9 +1188,12 @@ const BrandInfoTab: React.FC<{
             <input
               type="text"
               name="name"
+              id="brandName"
               value={formData.name}
               onChange={handleInputChange}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="Enter brand name"
+              title="Brand name"
             />
           </div>
           
@@ -1205,6 +1205,8 @@ const BrandInfoTab: React.FC<{
               value={formData.tagline}
               onChange={handleInputChange}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="Enter brand tagline"
+              title="Brand tagline"
             />
           </div>
         </div>
@@ -1217,6 +1219,8 @@ const BrandInfoTab: React.FC<{
             value={formData.description}
             onChange={handleInputChange}
             className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            placeholder="Enter brand description"
+            title="Brand description"
           />
         </div>
 
@@ -1229,6 +1233,8 @@ const BrandInfoTab: React.FC<{
               value={formData.email}
               onChange={handleInputChange}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="Enter email address"
+              title="Email address"
             />
           </div>
           
@@ -1240,6 +1246,8 @@ const BrandInfoTab: React.FC<{
               value={formData.phone}
               onChange={handleInputChange}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="Enter phone number"
+              title="Phone number"
             />
           </div>
         </div>
@@ -1252,6 +1260,8 @@ const BrandInfoTab: React.FC<{
             value={formData.whatsapp}
             onChange={handleInputChange}
             className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            placeholder="Enter WhatsApp number"
+            title="WhatsApp number"
           />
         </div>
 
@@ -1263,6 +1273,8 @@ const BrandInfoTab: React.FC<{
             value={formData.address}
             onChange={handleInputChange}
             className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            placeholder="Enter business address"
+            title="Business address"
           />
         </div>
         {/* Business Hours Section */}
@@ -1437,7 +1449,6 @@ const UsersTab: React.FC = () => {
     const loadUsers = async () => {
       try {
         const response = await apiService.getUsers();
-        console.log('API /api/users response:', response);
         setUsers(Array.isArray(response) ? response : []);
       } catch (error) {
         console.error('Failed to load users:', error);

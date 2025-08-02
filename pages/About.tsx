@@ -15,8 +15,8 @@ const About: React.FC = () => {
         setError('');
         const data = await apiService.getBrandInfo();
         setBrandInfo(data);
-      } catch (error) {
-        console.error('Failed to load brand info:', error);
+      } catch {
+        console.error('Failed to load brand info');
         setError('Failed to load company information');
       } finally {
         setLoading(false);

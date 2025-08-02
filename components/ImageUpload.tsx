@@ -41,29 +41,6 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
   const [localImages, setLocalImages] = useState<LocalImage[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    
-    const files = Array.from(e.dataTransfer.files);
-    handleFiles(files);
-  }, [handleFiles]);
-
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    handleFiles(files);
-  }, [handleFiles]);
-
   const handleFiles = useCallback(async (files: File[]) => {
     if (disabled) return;
 
@@ -108,24 +85,39 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
     }
   }, [disabled, existingImages.length, localImages.length, maxImages, onImagesUploaded, onLocalImagesSelected, delayedUpload]);
 
-  const handleDeleteImage = useCallback(async (publicId: string) => {
-    console.log('handleDeleteImage called with publicId:', publicId);
-    console.log('disabled:', disabled);
-    console.log('allowImmediateDelete:', allowImmediateDelete);
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
     
+    const files = Array.from(e.dataTransfer.files);
+    handleFiles(files);
+  }, [handleFiles]);
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    handleFiles(files);
+  }, [handleFiles]);
+
+  const handleDeleteImage = useCallback(async (publicId: string) => {
     if (disabled) {
-      console.log('Component is disabled, returning');
       return;
     }
 
     if (allowImmediateDelete) {
       // Immediate deletion (for new uploads that haven't been saved yet)
-      console.log('Performing immediate deletion');
       try {
-        console.log('Attempting to delete image with publicId:', publicId);
         const { apiService } = await import('../services/ApiService');
-        const response = await apiService.deleteImage(publicId);
-        console.log('Delete response:', response);
+        await apiService.deleteImage(publicId);
         
         // Clear any previous errors
         setError(null);
@@ -139,8 +131,6 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
       }
     } else {
       // Mark for deletion (for existing images in edit mode) - no confirmation needed
-      console.log('Marking image for deletion:', publicId);
-      console.log('onImageMarkForDeletion function:', onImageMarkForDeletion);
       onImageMarkForDeletion?.(publicId);
     }
   }, [disabled, allowImmediateDelete, onImageDelete, onImageMarkForDeletion]);
@@ -161,21 +151,15 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
 
   // Function to upload local images to Cloudinary
   const uploadLocalImages = useCallback(async (): Promise<ProductImage[]> => {
-    console.log('uploadLocalImages called, localImages count:', localImages.length);
     if (localImages.length === 0) {
-      console.log('No local images to upload');
       return [];
     }
     
     setUploading(true);
     try {
-      console.log('Starting upload to Cloudinary...');
       const { apiService } = await import('../services/ApiService');
       const files = localImages.map(img => img.file);
-      console.log('Files to upload:', files.length);
       const result = await apiService.uploadImages(files);
-      console.log('Upload result:', result);
-      console.log('Upload result.images:', result.images);
       
       // Clean up local images
       localImages.forEach(img => URL.revokeObjectURL(img.preview));
@@ -227,6 +211,8 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
           onChange={handleFileSelect}
           className="hidden"
           disabled={disabled}
+          aria-label="Select images to upload"
+          title="Select images to upload"
         />
       </div>
 
@@ -249,10 +235,10 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
       {(existingImages.length > 0 || localImages.length > 0) && (
         <div className="space-y-3">
           <h4 className="font-medium text-gray-900">Product Images</h4>
-          <div className="grid gap-1" style={{gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))'}}>
+          <div className="flex flex-wrap gap-2">
             {/* Existing Images */}
             {existingImages.map((image, index) => (
-              <div key={image.publicId} className="relative group aspect-square max-w-[128px]">
+              <div key={image.publicId} className="relative group w-24 h-24 flex-shrink-0">
                 <img
                   src={image.url}
                   alt={`Product image ${index + 1}`}
@@ -265,8 +251,8 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
                       e.stopPropagation();
                       handleDeleteImage(image.publicId);
                     }}
-                    className="absolute top-0 right-0 m-0 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                    style={{lineHeight: 0}}
+                    className="absolute top-0 right-0 m-0 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 leading-none"
+                    title="Delete image"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
@@ -275,7 +261,7 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
             ))}
             {/* New Local Images */}
             {localImages.map((image) => (
-              <div key={image.id} className="relative group aspect-square max-w-[128px]">
+              <div key={image.id} className="relative group w-24 h-24 flex-shrink-0">
                 <img
                   src={image.preview}
                   alt="Selected image preview"
@@ -291,8 +277,8 @@ const ImageUpload = forwardRef<ImageUploadRef, ImageUploadProps>(({
                       e.stopPropagation();
                       handleDeleteLocalImage(image.id);
                     }}
-                    className="absolute top-0 right-0 m-0 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                    style={{lineHeight: 0}}
+                    className="absolute top-0 right-0 m-0 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 leading-none"
+                    title="Delete image"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>

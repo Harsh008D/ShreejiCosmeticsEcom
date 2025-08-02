@@ -90,8 +90,8 @@ const Cart: React.FC = () => {
       setShowOrderConfirm(true);
       // Save orderId for use in handleOrderConfirm if needed
       (window as Record<string, unknown>)._lastPlacedOrderId = orderId;
-    } catch (error) {
-      setLocalError(error instanceof Error ? error.message : 'Failed to place order or open WhatsApp.');
+    } catch {
+      setLocalError('Failed to place order or open WhatsApp.');
     }
     setPlacingOrder(false);
     setShowWhatsAppConfirm(false);
@@ -200,6 +200,8 @@ const Cart: React.FC = () => {
                               }}
                               className="p-2 text-gray-600 hover:text-emerald-600 transition-colors duration-200"
                               disabled={item.quantity <= 1 || loading || updatingId === pid}
+                              title="Decrease quantity"
+                              aria-label="Decrease quantity"
                             >
                               <Minus className="w-4 h-4" />
                             </button>
@@ -213,6 +215,9 @@ const Cart: React.FC = () => {
                               onKeyDown={handleInputKeyDown}
                               className="w-14 text-center border-none focus:ring-0 px-2 py-2 font-medium bg-transparent hide-arrows"
                               disabled={loading || updatingId === pid}
+                              title="Quantity"
+                              placeholder="Qty"
+                              aria-label="Product quantity"
                             />
                             <button
                               onClick={async () => {
@@ -220,6 +225,8 @@ const Cart: React.FC = () => {
                               }}
                               className="p-2 text-gray-600 hover:text-emerald-600 transition-colors duration-200"
                               disabled={loading || updatingId === pid}
+                              title="Increase quantity"
+                              aria-label="Increase quantity"
                             >
                               <Plus className="w-4 h-4" />
                             </button>

@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, ArrowRight } from 'lucide-react';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 import { Product } from '../types';
 
 const Wishlist: React.FC = () => {
   const { wishlistItems, removeFromWishlist, clearWishlist } = useWishlist();
   const { addToCart } = useCart();
+  const { showSuccess, showError } = useToast();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   // Ensure all wishlistItems have id set from _id if needed
@@ -18,7 +20,7 @@ const Wishlist: React.FC = () => {
     if (!pid) return;
     setLoadingId(pid);
     await addToCart(product, 1);
-    await removeFromWishlist(pid, true); // suppress toast for remove
+    await removeFromWishlist(pid);
     setLoadingId(null);
   };
 
@@ -26,8 +28,18 @@ const Wishlist: React.FC = () => {
     const pid = product.id;
     if (!pid) return;
     setLoadingId(pid);
-    await removeFromWishlist(pid); // show toast for direct remove
-    setLoadingId(null);
+    try {
+      const result = await removeFromWishlist(pid);
+      if (result.success) {
+        showSuccess('Removed from Wishlist', `${product.name} has been removed from your wishlist`);
+      } else {
+        showError('Failed to Remove', result.error || 'Failed to remove item from wishlist');
+      }
+    } catch {
+      showError('Error', 'Failed to remove item from wishlist');
+    } finally {
+      setLoadingId(null);
+    }
   };
 
   if (mappedWishlistItems.length === 0) {
@@ -67,11 +79,15 @@ const Wishlist: React.FC = () => {
           {mappedWishlistItems.length > 0 && (
             <button
               onClick={async () => {
-                await clearWishlist();
-                // Ensure UI updates after clearing
-                if (typeof window !== 'undefined' && window.location) {
-                  // Optionally, force a refresh if needed
-                  // window.location.reload();
+                try {
+                  const result = await clearWishlist();
+                  if (result.success) {
+                    showSuccess('Wishlist Cleared', 'Your wishlist has been cleared successfully');
+                  } else {
+                    showError('Failed to Clear', result.error || 'Failed to clear wishlist');
+                  }
+                } catch {
+                  showError('Error', 'Failed to clear wishlist');
                 }
               }}
               className="text-red-500 hover:text-red-700 font-medium transition-colors duration-200"

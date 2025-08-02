@@ -155,7 +155,7 @@ const AdminOrders: React.FC = () => {
         </div>
       </div>
       {/* Horizontal Tabs */}
-      <div className="flex flex-row flex-nowrap justify-center items-center gap-x-4 md:gap-x-6 lg:gap-x-8 mb-8 border-b border-gray-200 hide-scrollbar w-full min-w-0" style={{whiteSpace: 'nowrap'}}>
+      <div className="flex flex-row flex-nowrap justify-center items-center gap-x-4 md:gap-x-6 lg:gap-x-8 mb-8 border-b border-gray-200 hide-scrollbar w-full min-w-0 whitespace-nowrap">
         {ORDER_TABS.map(tab => {
           let count = 0;
           if (tab.id === 'pending') count = pendingOrders.length;
@@ -165,31 +165,17 @@ const AdminOrders: React.FC = () => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id as 'active' | 'delivered' | 'cancelled')}
               className={`flex-shrink-0 min-w-0 py-3 px-3 md:px-4 lg:px-5 mx-2 md:mx-3 lg:mx-4 text-base md:text-lg font-semibold focus:outline-none transition-colors border-b-2 ${activeTab === tab.id ? 'border-emerald-500 text-emerald-600 bg-emerald-50' : 'border-transparent text-gray-600 hover:text-emerald-600'} rounded-t-xl md:rounded-t-2xl flex items-center justify-center gap-2`}
-              style={{ minWidth: 0 }}
             >
               <span className="block md:hidden relative">{tab.icon}
                 {(tab.id === 'pending' || tab.id === 'active') && count > 0 && (
-                  <span style={{
-                    position: 'absolute',
-                    top: '-6px',
-                    right: '-10px',
-                    background: '#ef4444',
-                    color: 'white',
-                    borderRadius: '9999px',
-                    fontSize: '0.75em',
-                    fontWeight: 700,
-                    padding: '2px 6px',
-                    minWidth: '18px',
-                    display: 'inline-block',
-                    lineHeight: 1,
-                  }}>{count}</span>
+                  <span className="absolute -top-1.5 -right-2.5 bg-red-500 text-white rounded-full text-xs font-bold px-1.5 py-0.5 min-w-[18px] inline-block leading-none">{count}</span>
                 )}
               </span>
               <span className="hidden md:flex lg:hidden items-center gap-2">{tab.icon} {tab.label.medium}{(tab.id === 'pending' || tab.id === 'active') && count > 0 && (
-                <span style={{ marginLeft: 4, color: '#ef4444', fontWeight: 700, fontSize: '0.95em' }}>({count})</span>
+                <span className="ml-1 text-red-500 font-bold text-sm">({count})</span>
               )}</span>
               <span className="hidden lg:flex items-center gap-2">{tab.icon} {tab.label.full}{(tab.id === 'pending' || tab.id === 'active') && count > 0 && (
-                <span style={{ marginLeft: 4, color: '#ef4444', fontWeight: 700, fontSize: '0.95em' }}>({count})</span>
+                <span className="ml-1 text-red-500 font-bold text-sm">({count})</span>
               )}</span>
             </button>
           );

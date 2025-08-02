@@ -24,8 +24,8 @@ const Contact: React.FC = () => {
         setError('');
         const data = await apiService.getBrandInfo();
         setBrandInfo(data);
-      } catch (error) {
-        console.error('Failed to load brand info:', error);
+      } catch {
+        console.error('Failed to load brand info');
         setError('Failed to load company information');
       } finally {
         setLoading(false);
@@ -156,6 +156,8 @@ ${formData.message}`;
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg transition-colors cursor-pointer group hover:bg-blue-600"
+                      title="Visit our Facebook page"
+                      aria-label="Visit our Facebook page"
                     >
                       <FontAwesomeIcon icon={faFacebookF} className="w-5 h-5 transition-colors group-hover:text-white text-blue-600" />
                     </a>
@@ -171,6 +173,8 @@ ${formData.message}`;
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg transition-colors cursor-pointer group hover:bg-pink-500"
+                      title="Visit our Instagram page"
+                      aria-label="Visit our Instagram page"
                     >
                       <FontAwesomeIcon icon={faInstagram} className="w-5 h-5 transition-colors group-hover:text-white text-pink-500" />
                     </a>
@@ -186,6 +190,8 @@ ${formData.message}`;
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg transition-colors cursor-pointer group hover:bg-black"
+                      title="Visit our X (Twitter) page"
+                      aria-label="Visit our X (Twitter) page"
                     >
                       <FontAwesomeIcon icon={faXTwitter} className="w-5 h-5 transition-colors group-hover:text-white text-black" />
                     </a>
@@ -201,6 +207,8 @@ ${formData.message}`;
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg transition-colors cursor-pointer group hover:bg-blue-700"
+                      title="Visit our LinkedIn page"
+                      aria-label="Visit our LinkedIn page"
                     >
                       <FontAwesomeIcon icon={faLinkedinIn} className="w-5 h-5 transition-colors group-hover:text-white text-blue-700" />
                     </a>

@@ -249,6 +249,8 @@ const ProductDetail: React.FC = () => {
                 <button
                   onClick={handleShare}
                   className="p-2 text-gray-500 hover:text-emerald-600 transition-colors duration-200"
+                  title="Share product"
+                  aria-label="Share product"
                 >
                   <Share2 className="w-5 h-5" />
                 </button>
@@ -410,22 +412,13 @@ const ProductDetail: React.FC = () => {
                         setStarAnim(star);
                         setTimeout(() => setStarAnim(null), 500);
                       }}
-                      className={
+                      className={`${
                         (form.rating >= star ? 'text-amber-400' : 'text-gray-300') +
-                        ' transition-transform duration-300 focus:outline-none'
-                      }
-                      style={{
-                        outline: 'none',
-                        transitionDelay: starAnim && form.rating >= star ? `${(star-1)*40}ms` : '0ms',
-                        transform:
-                          starAnim && form.rating >= star
-                            ? 'scale(1.25) translateY(-4px)'
-                            : 'scale(1) translateY(0)',
-                        boxShadow:
-                          starAnim && form.rating >= star
-                            ? '0 4px 16px 0 rgba(251,191,36,0.25)'
-                            : 'none',
-                      }}
+                        ' transition-transform duration-300 focus:outline-none' +
+                        (starAnim && form.rating >= star ? ' animate-star-bounce' : '')
+                      }`}
+                      title={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                      aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
                     >
                       <Star className="w-6 h-6 fill-current" />
                     </button>

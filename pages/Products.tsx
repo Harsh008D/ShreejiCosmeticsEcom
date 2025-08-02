@@ -38,8 +38,7 @@ const Products: React.FC = () => {
     try {
       let result: Product[] = allProducts;
       // Debug logging
-      console.log('All products:', allProducts);
-      console.log('Search query:', searchQuery);
+      
 
       // Apply search
       if (searchQuery.trim()) {
@@ -225,6 +224,7 @@ const Products: React.FC = () => {
                     value={filters.category || ''}
                     onChange={(e) => handleFilterChange({ category: e.target.value || undefined })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    title="Filter by category"
                   >
                     <option value="">All Categories</option>
                     {getCategories().map(category => (
@@ -239,6 +239,7 @@ const Products: React.FC = () => {
                     value={sort}
                     onChange={e => setSort(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    title="Sort products"
                   >
                     <option value="all">All</option>
                     <option value="category">Category</option>
@@ -253,6 +254,7 @@ const Products: React.FC = () => {
                     value={filters.inStock === undefined ? '' : filters.inStock.toString()}
                     onChange={(e) => handleFilterChange({ inStock: e.target.value === '' ? undefined : e.target.value === 'true' })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    title="Filter by availability"
                   >
                     <option value="">All</option>
                     <option value="true">In Stock</option>
@@ -289,6 +291,7 @@ const Products: React.FC = () => {
                     value={filters.category || ''}
                     onChange={(e) => handleFilterChange({ category: e.target.value || undefined })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    title="Filter by category"
                   >
                     <option value="">All Categories</option>
                     {getCategories().map(category => (
@@ -303,6 +306,7 @@ const Products: React.FC = () => {
                     value={sort}
                     onChange={e => setSort(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    title="Sort products"
                   >
                     <option value="all">All</option>
                     <option value="category">Category</option>
@@ -317,6 +321,7 @@ const Products: React.FC = () => {
                     value={filters.inStock === undefined ? '' : filters.inStock.toString()}
                     onChange={(e) => handleFilterChange({ inStock: e.target.value === '' ? undefined : e.target.value === 'true' })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    title="Filter by availability"
                   >
                     <option value="">All</option>
                     <option value="true">In Stock</option>

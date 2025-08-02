@@ -9,6 +9,7 @@ input[type='number'], input[type='text'].hide-arrows::-webkit-outer-spin-button,
 }
 input[type='number'], input[type='text'].hide-arrows {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 /* Hide scrollbar for thumbnail navigation */
@@ -32,5 +33,26 @@ input[type='number'], input[type='text'].hide-arrows {
 
 .hover-lift:hover {
   transform: translateY(-2px);
+}
+
+/* Home hero background */
+.bg-home-hero {
+  background-image: url('/HomeBackImage2.jpg');
+}
+
+/* Star animation for rating */
+@keyframes star-bounce {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+    box-shadow: none;
+  }
+  50% {
+    transform: scale(1.25) translateY(-4px);
+    box-shadow: 0 4px 16px 0 rgba(251,191,36,0.25);
+  }
+}
+
+.animate-star-bounce {
+  animation: star-bounce 0.5s ease-in-out;
 }
 

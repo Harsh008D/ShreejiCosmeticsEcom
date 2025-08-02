@@ -20,18 +20,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "components/**/*",
-    "pages/**/*",
-    "services/**/*",
-    "context/**/*",
-    "models/**/*",
-    "types/**/*",
-    "controllers/**/*",
-    "views/**/*",
-    "mvc/**/*"
-  ],
-  "exclude": ["node_modules", "dist", "backend"]
+  "include": ["src"]
 }

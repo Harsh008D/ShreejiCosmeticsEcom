@@ -418,7 +418,6 @@ class ApiService {
     return this.request(`/api/orders/${orderId}/confirm`, {
       method: 'POST',
       body: JSON.stringify({ status }),
-      headers: { 'Content-Type': 'application/json' },
     });
   }
 
