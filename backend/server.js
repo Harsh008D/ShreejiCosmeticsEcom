@@ -25,7 +25,7 @@ import ordersRoutes from './routes/orders.js';
 import uploadRoutes from './routes/upload.js';
 
 // Load environment variables
-dotenv.config({ path: './config.env' });
+dotenv.config();
 
 // Environment variable validation
 const requiredEnvVars = ['MONGODB_URI', 'SESSION_SECRET'];
@@ -33,7 +33,7 @@ const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingVars.length > 0) {
   console.error('❌ Missing required environment variables:', missingVars);
-  console.error('Please check your config.env file or Railway environment variables');
+  console.error('Please check your environment variables in Render Dashboard');
   process.exit(1);
 }
 

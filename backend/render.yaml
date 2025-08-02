@@ -2,7 +2,7 @@ services:
   - type: web
     name: shreeji-cosmetics-backend
     env: node
-    buildCommand: npm install
+    buildCommand: npm install && npm run test-deploy
     startCommand: npm start
     envVars:
       - key: NODE_ENV
